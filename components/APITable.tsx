@@ -110,7 +110,14 @@ const APITable: React.FC<APITableProps> = ({
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="font-bold truncate max-w-[80px] text-white/70">{c.lastUpdatedByName || '-'}</span>
-                                        <span className="text-[9px] text-white/20">{c.timestamp ? new Date(c.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '-'}</span>
+                                        <span className="text-[9px] text-white/20">
+                                            {c.timestamp ? new Date(c.timestamp).toLocaleString(undefined, {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            }) : '-'}
+                                        </span>
                                     </div>
                                 </div>
                             </td>
