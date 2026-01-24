@@ -133,7 +133,7 @@ const Dashboard: React.FC<DashboardProps> = ({ testCases, apiTestCases }) => {
                     <div className="flex-1 w-full min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={priorityData} layout="vertical" margin={{ left: 10, right: 10 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#222" horizontal={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" horizontal={false} />
                                 <XAxis type="number" stroke="#444" fontSize={10} tick={{ fill: '#666' }} />
                                 <YAxis dataKey="name" type="category" stroke="#444" fontSize={10} width={60} tick={{ fill: '#888' }} />
                                 <Tooltip

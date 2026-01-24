@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Square, CheckSquare, ListOrdered, RefreshCcw, Play, Edit3, Trash2, CheckCircle2, XCircle, MessageSquare, User
+  Square, CheckSquare, ListOrdered, RefreshCcw, Play, Edit3, Trash2, CheckCircle2, XCircle, MessageSquare, User, ChevronDown, ChevronRight
 } from 'lucide-react';
 import Badge from './ui/Badge';
 import { TestCase } from '../types';
@@ -32,6 +32,14 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
   onStatusUpdate,
   onMessage
 }) => {
+  const [expandedSteps, setExpandedSteps] = React.useState<Set<string>>(new Set());
+
+  const toggleSteps = (id: string) => {
+    const next = new Set(expandedSteps);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setExpandedSteps(next);
+  };
+
   return (
     <div className="border border-white/10 rounded-sm overflow-hidden bg-[#050505]">
       <table className="w-full text-left border-collapse">
@@ -44,7 +52,7 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
             </th>
             <th className="px-4 py-3 font-bold w-28">ID</th>
             <th className="px-4 py-3 font-bold">Scenario</th>
-            <th className="px-4 py-3 font-bold w-32">Steps</th>
+            <th className="px-4 py-3 font-bold w-64">Steps</th>
             <th className="px-4 py-3 font-bold w-32">Module</th>
             <th className="px-4 py-3 font-bold w-16 text-center">Round</th>
             <th className="px-4 py-3 font-bold w-24">Priority</th>
@@ -68,15 +76,33 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                   {c.title}
                 </div>
               </td>
-              <td className="px-4 py-3">
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-1.5 text-white/50 text-[11px]">
-                    <ListOrdered size={12} className="text-white/20" />
-                    <span>{c.steps?.filter(s => s.trim()).length || 0} Steps</span>
+              <td className="px-4 py-4 align-top">
+                <div
+                  className="flex flex-col gap-2 cursor-pointer group/steps"
+                  onClick={() => toggleSteps(c.id)}
+                >
+                  <div className="flex items-center gap-2 text-white/50 text-[11px] group-hover/steps:text-white transition-colors">
+                    <ListOrdered size={14} className="text-white/20 group-hover/steps:text-blue-400 transition-colors" />
+                    <span className="font-bold">{c.steps?.filter(s => s.trim()).length || 0} Steps</span>
+                    {expandedSteps.has(c.id) ? <ChevronDown size={12} /> : <ChevronRight size={12} className="opacity-0 group-hover/steps:opacity-100 transition-opacity" />}
                   </div>
-                  <div className="text-[10px] text-white/20 truncate max-w-[120px] italic">
-                    {c.steps?.[0] ? `1. ${c.steps[0]}` : 'No sequence'}
-                  </div>
+
+                  {expandedSteps.has(c.id) && c.steps && c.steps.length > 0 && (
+                    <div className="pl-6 flex flex-col gap-1 animate-in slide-in-from-top-1 fade-in duration-200">
+                      {c.steps.filter(s => s.trim()).map((step, i) => (
+                        <div key={i} className="text-[10px] text-white/70 leading-relaxed flex gap-2">
+                          <span className="text-white/20 select-none">{i + 1}.</span>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {!expandedSteps.has(c.id) && (
+                    <div className="text-[10px] text-white/20 truncate max-w-[120px] italic pl-6">
+                      {c.steps?.[0] ? `1. ${c.steps[0]}...` : 'No sequence'}
+                    </div>
+                  )}
                 </div>
               </td>
               <td className="px-4 py-3"><Badge>{c.module || 'Unassigned'}</Badge></td>
@@ -109,7 +135,14 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold truncate max-w-[80px] text-white/70">{c.lastUpdatedByName || '-'}</span>
-                    <span className="text-[9px] text-white/20">{c.timestamp ? new Date(c.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '-'}</span>
+                    <span className="text-[9px] text-white/20">
+                      {c.timestamp ? new Date(c.timestamp).toLocaleString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : '-'}
+                    </span>
                   </div>
                 </div>
               </td>
@@ -158,7 +191,7 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
             </tr>
           )) : (
             <tr>
-              <td colSpan={9} className="px-4 py-24 text-center">
+              <td colSpan={11} className="px-4 py-24 text-center">
                 <div className="flex flex-col items-center gap-3 opacity-20">
                   <Square size={48} strokeWidth={1} />
                   <span className="text-xs uppercase tracking-widest font-bold">
