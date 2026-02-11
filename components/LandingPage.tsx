@@ -27,7 +27,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ user, onLogin, onDemo, onEnte
 
                 <div className="flex items-center gap-6">
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white/60">
-                        <a href="#" className="hover:text-white transition-colors">Features</a>
+                        <a href="#" className="hover:text-white transition-colors">Features1</a>
                         <a href="#" className="hover:text-white transition-colors">Documentation</a>
                         <a href="#" className="hover:text-white transition-colors">Pricing</a>
                     </nav>
