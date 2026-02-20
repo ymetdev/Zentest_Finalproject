@@ -22,7 +22,8 @@ const DEFAULT_FORM: Partial<APITestCase> = {
     headers: [{ key: 'Content-Type', value: 'application/json' }],
     body: '',
     expectedStatus: 200,
-    expectedBody: ''
+    expectedBody: '',
+    round: 1
 };
 
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
@@ -41,9 +42,23 @@ const APIForm: React.FC<APIFormProps> = ({
     }, [isOpen, editingCase, modules]);
 
     useEffect(() => {
-        if (!editingCase && form.url) {
-            // Automatic Priority Assessment Logic
-            const url = form.url.toLowerCase();
+        if (!editingCase) {
+            // 1. Automatic Status Code Suggestion (Triggers on Method change)
+            const method = form.method || 'GET';
+            let suggestedStatus = 200;
+            if (method === 'POST') suggestedStatus = 201;
+            else if (method === 'DELETE') suggestedStatus = 204;
+
+            if (form.expectedStatus !== suggestedStatus) {
+                setForm(prev => ({ ...prev, expectedStatus: suggestedStatus }));
+            }
+        }
+    }, [form.method, editingCase]);
+
+    useEffect(() => {
+        if (!editingCase && (form.url || form.title)) {
+            // 2. Automatic Priority Assessment (Triggers on URL/Title change)
+            const url = (form.url || '').toLowerCase();
             const title = (form.title || '').toLowerCase();
             const method = form.method || 'GET';
 
@@ -63,7 +78,7 @@ const APIForm: React.FC<APIFormProps> = ({
                 setForm(prev => ({ ...prev, priority: suggestedPriority }));
             }
         }
-    }, [form.url, form.title, form.method, editingCase]);
+    }, [form.url, form.title, editingCase]);
 
     const handleSave = async () => {
         if (!form.url || !activeProjectId) return;

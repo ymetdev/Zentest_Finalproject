@@ -331,10 +331,11 @@ export const APITestCaseService = {
     await deleteDoc(doc(db, PUBLIC_DATA_PATH[0], PUBLIC_DATA_PATH[1], PUBLIC_DATA_PATH[2], PUBLIC_DATA_PATH[3], 'apiTestCases', id));
   },
 
-  updateStatus: async (id: string, status: string, user: any) => {
+  updateStatus: async (id: string, status: string, user: any, extraData: any = {}) => {
     if (!isConfigured) { await delay(200); return; }
     await updateDoc(doc(db, PUBLIC_DATA_PATH[0], PUBLIC_DATA_PATH[1], PUBLIC_DATA_PATH[2], PUBLIC_DATA_PATH[3], 'apiTestCases', id), {
       status,
+      ...extraData,
       timestamp: Date.now(),
       lastUpdatedBy: user?.uid,
       lastUpdatedByName: user?.displayName || 'Unknown',

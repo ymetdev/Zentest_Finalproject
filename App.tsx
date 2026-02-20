@@ -109,6 +109,7 @@ export default function App() {
 
   // Execution
   const [executingId, setExecutingId] = useState<string | null>(null);
+  const [lastApiResponse, setLastApiResponse] = useState<any>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isHeadless, setIsHeadless] = useState(false);
@@ -393,23 +394,32 @@ export default function App() {
       if (!response.ok) throw new Error(result.error || result.message || 'Unknown Server Error');
 
       const isSuccess = result.status >= 200 && result.status < 300;
+      log(`--------------------------------------------------`);
       log(`Response Status: ${result.status} ${result.statusText}`, isSuccess ? 'success' : 'error');
       log(`Duration: ${result.duration}ms`);
 
       if (result.data) {
-        log(`Response Body: ${typeof result.data === 'object' ? JSON.stringify(result.data, null, 2) : result.data}`);
+        log(`\n[RESPONSE BODY]`);
+        const formattedBody = typeof result.data === 'object'
+          ? JSON.stringify(result.data, null, 2)
+          : String(result.data).length > 500
+            ? String(result.data).substring(0, 500) + '... (truncated)'
+            : result.data;
+        log(formattedBody);
       }
+      log(`--------------------------------------------------`);
 
       // Check Expectation
       const expected = parseInt(String(testCase.expectedStatus)) || 200;
       const passed = result.status === expected;
 
       if (!passed) {
-        log(`Make sure to match expected status: ${expected}`, 'error');
+        log(`EXPECTATION FAILED: Expected ${expected}, but got ${result.status}`, 'error');
       }
 
       const status = passed ? 'Passed' : 'Failed';
-      await updateStatus(testCase.id, status, 'api');
+      const nextRound = (testCase.round || 1) + 1;
+      await updateStatus(testCase.id, status, 'api', { actualStatus: result.status, round: nextRound });
 
       // Save History
       if (user.uid !== 'demo-user') {
@@ -427,8 +437,9 @@ export default function App() {
         await ExecutionHistoryService.add(historyEntry);
       }
 
-      log(`>>> API TEST ${status.toUpperCase()}`, passed ? 'success' : 'error');
+      log(`>>> API TEST ${status.toUpperCase()} <<<`, passed ? 'success' : 'error');
 
+      setLastApiResponse(result);
       if (!isBulk) setExecutingId(null);
       return true;
     } catch (error: any) {
@@ -1125,6 +1136,7 @@ export default function App() {
         onClose={() => setIsTerminalOpen(false)}
         logs={logs}
         executingId={executingId || ''}
+        lastResponse={lastApiResponse}
       />
 
       <CommentsDrawer

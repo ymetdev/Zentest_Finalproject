@@ -119,9 +119,9 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
         else await Promise.all(idsToDelete.map(id => APITestCaseService.delete(id)));
     };
 
-    const updateStatus = async (id: string, status: 'Passed' | 'Failed', type: 'functional' | 'api') => {
+    const updateStatus = async (id: string, status: 'Passed' | 'Failed', type: 'functional' | 'api', extraData: any = {}) => {
         // Optimistic Update
-        const update = { status, timestamp: Date.now(), lastUpdatedBy: user?.uid, lastUpdatedByName: user?.displayName || 'Guest' };
+        const update = { status, ...extraData, timestamp: Date.now(), lastUpdatedBy: user?.uid, lastUpdatedByName: user?.displayName || 'Guest' };
         if (type === 'functional') {
             setTestCases((prev: TestCase[]) => prev.map(c => c.id === id ? { ...c, ...update } as TestCase : c));
         } else {
@@ -131,7 +131,7 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
         if (user.uid === 'demo-user') return;
 
         if (type === 'functional') await TestCaseService.updateStatus(id, status, user);
-        else await APITestCaseService.updateStatus(id, status, user);
+        else await APITestCaseService.updateStatus(id, status, user, extraData);
     };
 
     const handleAddModule = async (name: string) => {

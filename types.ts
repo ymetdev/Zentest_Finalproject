@@ -68,6 +68,7 @@ export interface APITestCase {
   description?: string;
   expectedStatus: number;
   expectedBody?: string;
+  actualStatus?: number;
   lastUpdatedBy?: string;
   lastUpdatedByName?: string;
   lastUpdatedByPhoto?: string;
