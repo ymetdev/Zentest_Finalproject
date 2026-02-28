@@ -128,10 +128,12 @@ export const ProjectService = {
 
     const projectId = project.id;
 
+    const targetRole = project.owner === user.uid ? 'owner' : 'viewer';
+
     // 1. Add to My Projects
     await setDoc(doc(db, USER_DATA_PATH(user.uid)[0], USER_DATA_PATH(user.uid)[1], USER_DATA_PATH(user.uid)[2], USER_DATA_PATH(user.uid)[3], USER_DATA_PATH(user.uid)[4], projectId), {
       joinedAt: Date.now(),
-      role: 'viewer'
+      role: targetRole
     });
 
     // 2. Add to Project Members
@@ -140,7 +142,7 @@ export const ProjectService = {
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
-      role: 'viewer',
+      role: targetRole,
       joinedAt: Date.now()
     });
 
@@ -384,10 +386,11 @@ export const APITestCaseService = {
     await deleteDoc(doc(db, PUBLIC_DATA_PATH[0], PUBLIC_DATA_PATH[1], PUBLIC_DATA_PATH[2], PUBLIC_DATA_PATH[3], 'apiTestCases', id));
   },
 
-  updateStatus: async (id: string, status: string, user: any) => {
+  updateStatus: async (id: string, status: string, user: any, extraData: any = {}) => {
     if (!isConfigured) { await delay(200); return; }
     await updateDoc(doc(db, PUBLIC_DATA_PATH[0], PUBLIC_DATA_PATH[1], PUBLIC_DATA_PATH[2], PUBLIC_DATA_PATH[3], 'apiTestCases', id), {
       status,
+      ...extraData,
       timestamp: Date.now(),
       lastUpdatedBy: user?.uid,
       lastUpdatedByName: user?.displayName || 'Unknown',

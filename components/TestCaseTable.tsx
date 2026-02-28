@@ -126,19 +126,17 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
 
                   <td className="px-5 py-6 align-middle">
                     <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 flex-wrap mb-1">
                         <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 uppercase tracking-tight">{c.id}</span>
-                        <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase tracking-tight">{c.module || 'GENERAL'}</span>
+                        <span className="text-[10px] font-black text-pink-400 bg-pink-500/10 px-1.5 py-0.5 rounded border border-pink-500/20 uppercase tracking-tight">{c.module || 'GENERAL'}</span>
                       </div>
                       <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors leading-snug truncate">
                         {c.title}
                       </div>
-                      {c.round && (
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <div className="w-1 h-1 rounded-full bg-white/20" />
-                          <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.1em]">Round {c.round}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <div className="w-1 h-1 rounded-full bg-white/20" />
+                        <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.1em]">Round {c.round || 1}</span>
+                      </div>
                     </div>
                   </td>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db, appId, isConfigured } from '../firebase';
 import { TestCase, APITestCase, Module, Comment, Project } from '../types';
@@ -71,6 +71,11 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
         };
         const payload = { ...data, ...audit };
 
+        // auto-create module if it doesn't exist
+        if (data.module && data.module.trim() !== '' && !modules.some(m => m.name.toLowerCase() === data.module!.toLowerCase())) {
+            await handleAddModule(data.module);
+        }
+
         // Optimistic Update
         if (!isNew && data.id) {
             setTestCases((prev: TestCase[]) => prev.map(c => c.id === data.id ? { ...c, ...payload } as TestCase : c));
@@ -93,6 +98,11 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
             timestamp: Date.now()
         };
         const payload = { ...data, ...audit };
+
+        // auto-create module if it doesn't exist
+        if (data.module && data.module.trim() !== '' && !modules.some(m => m.name.toLowerCase() === data.module!.toLowerCase())) {
+            await handleAddModule(data.module);
+        }
 
         // Optimistic Update
         if (!isNew && data.id) {
@@ -119,9 +129,9 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
         else await Promise.all(idsToDelete.map(id => APITestCaseService.delete(id)));
     };
 
-    const updateStatus = async (id: string, status: 'Passed' | 'Failed', type: 'functional' | 'api') => {
+    const updateStatus = async (id: string, status: 'Passed' | 'Failed', type: 'functional' | 'api', extraData: any = {}) => {
         // Optimistic Update
-        const update = { status, timestamp: Date.now(), lastUpdatedBy: user?.uid, lastUpdatedByName: user?.displayName || 'Guest' };
+        const update = { status, ...extraData, timestamp: Date.now(), lastUpdatedBy: user?.uid, lastUpdatedByName: user?.displayName || 'Guest' };
         if (type === 'functional') {
             setTestCases((prev: TestCase[]) => prev.map(c => c.id === id ? { ...c, ...update } as TestCase : c));
         } else {
@@ -131,7 +141,7 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
         if (user.uid === 'demo-user') return;
 
         if (type === 'functional') await TestCaseService.updateStatus(id, status, user);
-        else await APITestCaseService.updateStatus(id, status, user);
+        else await APITestCaseService.updateStatus(id, status, user, extraData);
     };
 
     const handleAddModule = async (name: string) => {
@@ -160,8 +170,38 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
     };
 
 
+    const allModules = useMemo(() => {
+        const list = [...modules];
+        const existingNames = new Set(modules.map(m => m.name.toLowerCase()));
+
+        const discoveredNames = new Set<string>();
+        // Always suggest 'General' as it's the system default fallback
+        discoveredNames.add('General');
+
+        [...testCases, ...apiTestCases].forEach(tc => {
+            if (tc.module && tc.module.trim() !== '') {
+                discoveredNames.add(tc.module.trim());
+            }
+        });
+
+        discoveredNames.forEach(name => {
+            if (!existingNames.has(name.toLowerCase())) {
+                const isGeneral = name.toLowerCase() === 'general';
+                list.push({
+                    id: isGeneral ? 'default-general' : `discovered-${name}`,
+                    name,
+                    projectId: activeProjectId || ''
+                } as Module);
+            }
+        });
+
+        return list.sort((a, b) => a.name.localeCompare(b.name));
+    }, [modules, testCases, apiTestCases, activeProjectId]);
+
+
     return {
         modules,
+        allModules,
         testCases,
         setTestCases, // Exposed for automation / bulk run updates
         apiTestCases,

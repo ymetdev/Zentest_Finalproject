@@ -56,6 +56,7 @@ export default function App() {
   const { projects, activeProjectId, setActiveProjectId, handleProjectSave, handleJoin, handleDeleteProject } = useProjects(user);
   const {
     modules,
+    allModules,
     testCases,
     setTestCases,
     apiTestCases,
@@ -140,6 +141,7 @@ export default function App() {
 
   // Execution
   const [executingId, setExecutingId] = useState<string | null>(null);
+  const [lastApiResponse, setLastApiResponse] = useState<any>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isHeadless, setIsHeadless] = useState(false);
@@ -424,23 +426,32 @@ export default function App() {
       if (!response.ok) throw new Error(result.error || result.message || 'Unknown Server Error');
 
       const isSuccess = result.status >= 200 && result.status < 300;
+      log(`--------------------------------------------------`);
       log(`Response Status: ${result.status} ${result.statusText}`, isSuccess ? 'success' : 'error');
       log(`Duration: ${result.duration}ms`);
 
       if (result.data) {
-        log(`Response Body: ${typeof result.data === 'object' ? JSON.stringify(result.data, null, 2) : result.data}`);
+        log(`\n[RESPONSE BODY]`);
+        const formattedBody = typeof result.data === 'object'
+          ? JSON.stringify(result.data, null, 2)
+          : String(result.data).length > 500
+            ? String(result.data).substring(0, 500) + '... (truncated)'
+            : result.data;
+        log(formattedBody);
       }
+      log(`--------------------------------------------------`);
 
       // Check Expectation
       const expected = parseInt(String(testCase.expectedStatus)) || 200;
       const passed = result.status === expected;
 
       if (!passed) {
-        log(`Make sure to match expected status: ${expected}`, 'error');
+        log(`EXPECTATION FAILED: Expected ${expected}, but got ${result.status}`, 'error');
       }
 
       const status = passed ? 'Passed' : 'Failed';
-      await updateStatus(testCase.id, status, 'api');
+      const nextRound = (testCase.round || 1) + 1;
+      await updateStatus(testCase.id, status, 'api', { actualStatus: result.status, round: nextRound });
 
       // Save History
       if (user.uid !== 'demo-user') {
@@ -458,8 +469,9 @@ export default function App() {
         await ExecutionHistoryService.add(historyEntry);
       }
 
-      log(`>>> API TEST ${status.toUpperCase()}`, passed ? 'success' : 'error');
+      log(`>>> API TEST ${status.toUpperCase()} <<<`, passed ? 'success' : 'error');
 
+      setLastApiResponse(result);
       if (!isBulk) setExecutingId(null);
       return true;
     } catch (error: any) {
@@ -966,7 +978,7 @@ export default function App() {
                 className="bg-zinc-900 border border-white/10 text-[10px] text-white/70 rounded px-2 py-1 outline-none focus:border-white/20 custom-select uppercase font-bold tracking-wider"
               >
                 <option value="All">All Modules</option>
-                {modules.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                {allModules.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
               </select>
 
               {/* Priority Filter */}
@@ -1087,6 +1099,7 @@ export default function App() {
                 setEditingCase(null);
                 setIsCaseModalOpen(true);
               }}
+              readOnly={activeProject?.role === 'viewer'}
             />
           ) : (
             <APITable
@@ -1141,6 +1154,7 @@ export default function App() {
                 setEditingAPICase(null);
                 setIsAPIModalOpen(true);
               }}
+              readOnly={activeProject?.role === 'viewer'}
             />
           )}
         </div>
@@ -1168,8 +1182,9 @@ export default function App() {
         isOpen={isCaseModalOpen}
         onClose={() => setIsCaseModalOpen(false)}
         activeProjectId={activeProjectId}
-        modules={modules}
+        modules={allModules}
         editingCase={editingCase}
+        user={user}
         onSave={async (data, isNew) => {
           await handleTestCaseSave(data, isNew);
           // Don't auto-close here, let TestCaseForm handle its own single-save close
@@ -1182,7 +1197,7 @@ export default function App() {
         isOpen={isAPIModalOpen}
         onClose={() => setIsAPIModalOpen(false)}
         activeProjectId={activeProjectId}
-        modules={modules}
+        modules={allModules}
         editingCase={editingAPICase}
         onSave={async (data, isNew) => {
           await handleAPICaseSave(data, isNew);
@@ -1207,6 +1222,7 @@ export default function App() {
         onClose={() => setIsTerminalOpen(false)}
         logs={logs}
         executingId={executingId || ''}
+        lastResponse={lastApiResponse}
       />
 
       <CommentsDrawer

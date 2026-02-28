@@ -90,15 +90,19 @@ const APITable: React.FC<APITableProps> = ({
                             {/* Scenario Details (ID, Module, Method, Title) */}
                             <td className="px-5 py-6 align-middle">
                                 <div className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                    <div className="flex items-center gap-1.5 flex-wrap mb-1">
                                         <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 uppercase tracking-tight">{c.id}</span>
-                                        <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase tracking-tight">{c.module || 'GENERAL'}</span>
+                                        <span className="text-[10px] font-black text-pink-400 bg-pink-500/10 px-1.5 py-0.5 rounded border border-pink-500/20 uppercase tracking-tight">{c.module || 'GENERAL'}</span>
                                         <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tight border ${METHOD_COLORS[c.method as keyof typeof METHOD_COLORS] || 'text-white/50 bg-white/5 border-white/10'}`}>
                                             {c.method}
                                         </span>
                                     </div>
                                     <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors leading-snug truncate">
                                         {c.title}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <div className="w-1 h-1 rounded-full bg-white/20" />
+                                        <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.1em]">Round {c.round || 1}</span>
                                     </div>
                                 </div>
                             </td>
@@ -125,13 +129,29 @@ const APITable: React.FC<APITableProps> = ({
                                     {expandedDetails.has(c.id) && (
                                         <div className="animate-in slide-in-from-top-2 fade-in duration-300 space-y-3 mt-1 bg-black/40 rounded border border-white/5 p-4">
                                             {c.headers && c.headers.length > 0 && (
-                                                <div className="space-y-1.5">
-                                                    <div className="text-[9px] text-white/30 uppercase tracking-widest font-bold">Headers</div>
-                                                    <div className="grid gap-1">
+                                                <div className="space-y-2">
+                                                    <div className="text-[9px] text-white/30 uppercase tracking-widest font-bold flex items-center gap-2">
+                                                        <span>Headers</span>
+                                                        <div className="h-px flex-1 bg-white/5"></div>
+                                                    </div>
+                                                    <div className="grid gap-2">
                                                         {c.headers.map((h, i) => (
-                                                            <div key={i} className="text-[10px] font-mono flex gap-2">
-                                                                <span className="text-blue-400">{h.key}:</span>
-                                                                <span className="text-white/60">{h.value}</span>
+                                                            <div key={i} className="flex flex-col gap-1 bg-white/[0.01] border border-white/5 rounded p-2 hover:bg-white/[0.03] transition-colors group/token">
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-[9px] font-bold text-blue-400/80 uppercase tracking-tight">{h.key}</span>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            navigator.clipboard.writeText(h.value);
+                                                                        }}
+                                                                        className="text-[8px] text-white/20 hover:text-white transition-colors uppercase opacity-0 group-hover/token:opacity-100"
+                                                                    >
+                                                                        Copy
+                                                                    </button>
+                                                                </div>
+                                                                <span className="text-[10px] font-mono text-white/50 break-all leading-normal whitespace-pre-wrap">
+                                                                    {h.value}
+                                                                </span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -158,7 +178,15 @@ const APITable: React.FC<APITableProps> = ({
 
                             {/* Status */}
                             <td className="px-6 py-6 align-middle text-center">
-                                <Badge variant={c.status} className="scale-110 shadow-sm">{c.status}</Badge>
+                                <div className="flex flex-col items-center gap-1.5">
+                                    <Badge variant={c.status} className="scale-110 shadow-sm">{c.status}</Badge>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[10px] font-bold text-white/30 uppercase tracking-tight">Exp: {c.expectedStatus || 200}</span>
+                                        {c.status === 'Failed' && c.actualStatus && (
+                                            <span className="text-[10px] font-bold text-red-400 uppercase tracking-tight">Act: {c.actualStatus}</span>
+                                        )}
+                                    </div>
+                                </div>
                             </td>
 
                             {/* Run Button */}
