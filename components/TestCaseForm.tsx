@@ -655,6 +655,16 @@ const TestCaseForm: React.FC<TestCaseFormProps> = ({
               </div>
             </div>
 
+            <div className="space-y-1.5 flex flex-col">
+              <label className="text-xs text-white/50 uppercase font-bold tracking-widest">Expected Result</label>
+              <textarea
+                value={form.expected}
+                onChange={(e) => setForm({ ...form, expected: e.target.value })}
+                className="w-full bg-[#0a0a0a] border border-white/10 rounded-sm px-4 py-3 outline-none text-sm text-white focus:border-white/20 transition-all resize-none custom-scrollbar placeholder:text-white/20 leading-relaxed min-h-[80px]"
+                placeholder="What is the expected outcome of this scenario?"
+              />
+            </div>
+
             <div className="space-y-1.5 flex-1 h-full flex flex-col">
               <label className="text-xs text-white/50 uppercase font-bold tracking-widest">Description / Pre-conditions</label>
               <textarea

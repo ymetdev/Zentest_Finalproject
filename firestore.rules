@@ -13,23 +13,24 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return request.auth.token.email == 'zentest48@gmail.com';
+      // Check for custom claim or a more secure admin verification
+      return request.auth.token.admin == true;
+    }
+
+    // Helper to check if user is a member of a project
+    function isProjectMember(appId, projectId) {
+      return exists(/databases/$(database)/documents/artifacts/$(appId)/public/data/projects/$(projectId)/members/$(request.auth.uid));
     }
 
     match /users/{userId} {
-      // User can read/write own doc. Admin can read/write ALL docs.
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isOwner() || isAdmin());
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow create: if isAuthenticated() && request.auth.uid == userId; // Users create their own doc on first login
+      allow create: if isAuthenticated() && request.auth.uid == userId; 
     }
 
     match /licenseKeys/{keyId} {
-        // Admin can do EVERYTHING (list, read, create, update, delete)
-        allow read, list: if isAuthenticated() && isAdmin();
-        allow create, delete: if isAuthenticated() && isAdmin();
+        allow read, list, create, delete: if isAuthenticated() && isAdmin();
         
-        // Regular user can ONLY read/get a specific key by ID (if they know it) to redeem it
-        // AND update it ONLY if claiming it
         allow get: if isAuthenticated(); 
         allow update: if isAuthenticated() 
                       && resource.data.isUsed == false 
@@ -38,35 +39,31 @@ service cloud.firestore {
                       && request.resource.data.usedAt == request.time;
     }
 
-    // 1. User Specific Data (My Projects)
-    // Path: artifacts/{appId}/users/{uid}/myProjects/{projectId}
-    // 1. User Specific Data (My Projects)
-    // Path: artifacts/{appId}/users/{uid}/myProjects/{projectId}
     match /artifacts/{appId}/users/{userId}/{document=**} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow write: if isOwner(userId);
     }
     
-    // 2. Public Shared Data (Projects, Modules, Test Cases)
-    // Path: artifacts/{appId}/public/data/{collection}/{id}
-    // 2. Public Shared Data (Projects, Modules, Test Cases)
-    // Path: artifacts/{appId}/public/data/{collection}/{id}
-    
-    // Special rule for Projects: Only owner can delete
     match /artifacts/{appId}/public/data/projects/{projectId} {
-       allow read, create, update: if isAuthenticated();
-       allow delete: if isAuthenticated() && resource.data.owner == request.auth.uid;
+       allow read: if isAuthenticated();
+       allow create: if isAuthenticated();
+       allow update: if isAuthenticated() && (resource.data.owner == request.auth.uid || isProjectMember(appId, projectId) || isAdmin());
+       allow delete: if isAuthenticated() && (resource.data.owner == request.auth.uid || isAdmin());
+
+       match /members/{memberId} {
+         allow read: if isAuthenticated();
+         allow write: if isAuthenticated() && (get(/databases/$(database)/documents/artifacts/$(appId)/public/data/projects/$(projectId)).data.owner == request.auth.uid || isAdmin());
+       }
     }
 
     match /artifacts/{appId}/public/data/{collectionName}/{document=**} {
-      // In a real production app, you might want stricter rules here
-      // e.g. only allow project owner to write
-      allow read, write: if isAuthenticated();
+      // Check membership for any test cases, modules, etc.
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isProjectMember(appId, request.resource.data.projectId) || isAdmin());
     }
     
-    // Default deny for everything else
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if isAdmin();
     }
   }
 }

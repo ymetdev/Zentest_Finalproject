@@ -115,7 +115,7 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
 
               return (
                 <tr key={c.id} className={`group transition-all duration-200 ${selectedIds.has(c.id) ? 'bg-blue-500/[0.03]' : 'hover:bg-white/[0.01]'}`}>
-                  <td className="px-5 py-6 text-center align-middle">
+                  <td className="px-5 py-6 text-center align-top">
                     <button
                       onClick={() => onToggleSelect(c.id)}
                       className={`${selectedIds.has(c.id) ? 'text-blue-500 scale-110' : 'text-white/10 group-hover:text-white/30'} transition-all`}
@@ -124,7 +124,7 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                     </button>
                   </td>
 
-                  <td className="px-5 py-6 align-middle">
+                  <td className="px-5 py-6 align-top">
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-1.5 flex-wrap mb-1">
                         <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 uppercase tracking-tight">{c.id}</span>
@@ -140,7 +140,7 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                     </div>
                   </td>
 
-                  <td className="px-5 py-6 align-middle overflow-hidden">
+                  <td className="px-5 py-6 align-top overflow-hidden">
                     <button
                       onClick={() => toggleSteps(c.id)}
                       className={`flex items-center gap-2 text-[10px] font-bold tracking-widest transition-all ${isExpanded ? 'text-blue-400 active:scale-95 mb-5' : 'text-white/40 hover:text-blue-400'}`}
@@ -154,59 +154,70 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
 
                     <div className={`grid transition-all duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                       <div className="overflow-hidden">
-                        <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-4 max-w-xl pb-2 mt-2">
-                          <div className="space-y-2 border-l-2 border-white/5 pl-4 ml-1">
-                            {c.steps?.map((step, idx) => (
-                              <div key={idx} className="text-xs text-white/50 flex gap-2">
-                                <span className="text-white/10 font-mono shrink-0 select-none">{idx + 1}.</span>
-                                <span className="leading-relaxed whitespace-normal break-words">{step}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="bg-blue-500/[0.04] border border-blue-500/10 rounded-lg p-4 shadow-inner">
-                            <div className="flex items-center gap-2 text-[10px] font-black text-blue-400 uppercase tracking-widest mb-3">
-                              <Target size={14} /> EXPECTED RESULT
+                        <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-4 max-w-xl pb-2 mt-4">
+                          {/* Scrollable Steps Container */}
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2 text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-1">
+                              <ListOrdered size={12} /> Execution Checklist
                             </div>
-                            {formatExpected(c.expected)}
-                          </div>
-                          {c.actualResult && (
-                            <div className={`rounded-lg p-4 border shadow-inner ${c.status === 'Passed' ? 'bg-emerald-500/[0.04] border-emerald-500/10' : 'bg-red-500/[0.04] border-red-500/10'}`}>
-                              <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest mb-3 ${c.status === 'Passed' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                {c.status === 'Passed' ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
-                                EXECUTION SUMMARY
-                              </div>
-                              <div className={`text-[13px] leading-relaxed font-bold ${c.status === 'Passed' ? 'text-emerald-300/80' : 'text-red-300/80 font-mono'}`}>
-                                {c.actualResult}
-                              </div>
+                            <div className="max-h-[200px] overflow-y-auto custom-scrollbar pr-3 space-y-2.5 border-l border-white/10 pl-4 ml-1">
+                              {c.steps?.map((step, idx) => (
+                                <div key={idx} className="text-[12px] text-white/50 flex gap-3 group/step">
+                                  <span className="text-white/10 font-mono shrink-0 select-none group-hover/step:text-blue-500/50 transition-colors uppercase italic">{String(idx + 1).padStart(2, '0')}.</span>
+                                  <span className="leading-relaxed whitespace-normal break-word">{step}</span>
+                                </div>
+                              ))}
                             </div>
-                          )}
+                          </div>
 
-                          {/* Screenshot Carousel with Centered Controls & Perfect Alignment */}
+                          {/* Expected Result & Summary Grid */}
+                          <div className="grid grid-cols-1 gap-3">
+                            <div className="bg-blue-500/[0.03] border border-blue-500/10 rounded-xl p-4 shadow-sm backdrop-blur-sm">
+                              <div className="flex items-center gap-2 text-[10px] font-black text-blue-400 uppercase tracking-widest mb-3">
+                                <Target size={14} /> Expected Result
+                              </div>
+                              <div className="pl-0.5">
+                                {formatExpected(c.expected)}
+                              </div>
+                            </div>
+
+                            {c.actualResult && (
+                              <div className={`rounded-xl p-4 border shadow-sm backdrop-blur-sm ${c.status === 'Passed' ? 'bg-emerald-500/[0.03] border-emerald-500/10' : 'bg-red-500/[0.03] border-red-500/10'}`}>
+                                <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest mb-3 ${c.status === 'Passed' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {c.status === 'Passed' ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
+                                  Actual Outcome
+                                </div>
+                                <div className={`text-[12px] leading-relaxed font-semibold ${c.status === 'Passed' ? 'text-emerald-300/70' : 'text-red-300/70 font-mono'}`}>
+                                  {c.actualResult}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Screenshot Carousel */}
                           {c.screenshots && c.screenshots.length > 0 && (
-                            <div className="relative group/gallery border border-white/5 rounded-2xl overflow-hidden bg-black/40 p-2 mt-4 shadow-2xl">
-                              {/* Gradient Overlays */}
+                            <div className="relative group/gallery border border-white/5 rounded-2xl overflow-hidden bg-black/40 p-2 mt-2 shadow-inner">
                               <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-black/80 to-transparent z-10 pointer-events-none opacity-0 group-hover/gallery:opacity-100 transition-opacity" />
                               <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-black/80 to-transparent z-10 pointer-events-none opacity-0 group-hover/gallery:opacity-100 transition-opacity" />
 
-                              {/* Premium Navigation Buttons - Fixed Action */}
                               <button
                                 type="button"
                                 onClick={() => scrollGallery(c.id, 'left')}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white hover:bg-white border border-white/20 rounded-full flex items-center justify-center text-black transition-all scale-0 group-hover/gallery:scale-100 shadow-[0_10px_30px_rgba(0,0,0,0.8)] active:scale-95 hover:-translate-x-1 cursor-pointer"
+                                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white hover:bg-white border border-white/20 rounded-full flex items-center justify-center text-black transition-all scale-0 group-hover/gallery:scale-100 shadow-[0_10px_30px_rgba(0,0,0,0.8)] active:scale-95 cursor-pointer"
                               >
                                 <ChevronLeft size={22} strokeWidth={3} />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => scrollGallery(c.id, 'right')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white hover:bg-white border border-white/20 rounded-full flex items-center justify-center text-black transition-all scale-0 group-hover/gallery:scale-100 shadow-[0_10px_30px_rgba(0,0,0,0.8)] active:scale-95 hover:translate-x-1 cursor-pointer"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white hover:bg-white border border-white/20 rounded-full flex items-center justify-center text-black transition-all scale-0 group-hover/gallery:scale-100 shadow-[0_10px_30px_rgba(0,0,0,0.8)] active:scale-95 cursor-pointer"
                               >
                                 <ChevronRight size={22} strokeWidth={3} />
                               </button>
 
                               <div
                                 id={`gallery-${c.id}`}
-                                className="flex gap-3 py-4 px-[calc(50%-110px)] overflow-x-auto snap-x snap-mandatory custom-scrollbar-none scroll-smooth items-center"
+                                className="flex gap-3 py-4 px-4 overflow-x-auto snap-x snap-mandatory custom-scrollbar-none scroll-smooth items-center"
                               >
                                 {c.screenshots.map((s, si) => {
                                   const isFailed = s.status === 'failed';
@@ -214,7 +225,7 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                                     <div
                                       key={si}
                                       onClick={() => setSelectedImage(s.base64)}
-                                      className={`w-[220px] aspect-video rounded-xl border-2 overflow-hidden cursor-zoom-in transition-all shrink-0 bg-[#0A0A0A] shadow-lg snap-center ${isFailed ? 'border-red-500 ring-4 ring-red-500/30' : 'border-white/10 hover:border-blue-500/50'}`}
+                                      className={`w-[180px] aspect-video rounded-xl border-2 overflow-hidden cursor-zoom-in transition-all shrink-0 bg-[#0A0A0A] shadow-lg snap-center ${isFailed ? 'border-red-500 ring-4 ring-red-500/30' : 'border-white/10 hover:border-blue-500/50'}`}
                                     >
                                       <div className="relative w-full h-full group/img">
                                         <img
@@ -222,24 +233,16 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                                           className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
                                           alt={`Step ${si + 1}`}
                                           referrerPolicy="no-referrer"
-                                          onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
-                                            target.parentElement!.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-white/5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/10"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></div>`;
-                                          }}
                                         />
-
-                                        {/* Centered Error Message */}
                                         {isFailed && (
                                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-red-900/20 backdrop-blur-[1px]">
-                                            <div className="bg-red-600/90 text-[10px] font-black text-white px-4 py-1.5 rounded-full uppercase tracking-[0.25em] shadow-[0_0_30px_rgba(220,38,38,0.7)] animate-pulse border-2 border-white/20 scale-110">
-                                              BUG DETECTED
+                                            <div className="bg-red-600/90 text-[9px] font-black text-white px-3 py-1 rounded-full uppercase tracking-[0.2em] shadow-xl animate-pulse border border-white/20 scale-100">
+                                              BUG
                                             </div>
                                           </div>
                                         )}
-
                                         <div className="absolute inset-0 bg-white/5 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                                          <Eye size={22} className="text-white bg-black/50 p-2 rounded-full drop-shadow-xl" />
+                                          <Eye size={18} className="text-white bg-black/50 p-1.5 rounded-full" />
                                         </div>
                                       </div>
                                     </div>
@@ -253,15 +256,15 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                     </div>
                   </td>
 
-                  <td className="px-5 py-6 align-middle text-center">
+                  <td className="px-5 py-6 align-top text-center">
                     <Badge variant={c.priority} className="scale-90">{c.priority}</Badge>
                   </td>
 
-                  <td className="px-6 py-6 align-middle text-center">
+                  <td className="px-6 py-6 align-top text-center">
                     <Badge variant={c.status} className="scale-110 shadow-sm">{c.status}</Badge>
                   </td>
 
-                  <td className="px-6 py-6 align-middle text-center">
+                  <td className="px-6 py-6 align-top text-center">
                     {c.hasAutomation && (
                       <button
                         onClick={() => !isExecuting && onRun(c)}
@@ -277,7 +280,7 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                     )}
                   </td>
 
-                  <td className="px-6 py-6 align-middle">
+                  <td className="px-6 py-6 align-top">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-white/5 to-white/10 p-[1px] shadow-inner shrink-0">
                         <div className="w-full h-full rounded-full overflow-hidden bg-black/50 flex items-center justify-center">
@@ -312,7 +315,7 @@ const TestCaseTable: React.FC<TestCaseTableProps> = ({
                     </div>
                   </td>
 
-                  <td className="px-5 py-6 align-middle text-center">
+                  <td className="px-5 py-6 align-top text-center">
                     <div className="flex flex-col gap-2 items-center">
                       {!readOnly && (
                         <div className="flex items-center bg-white/5 rounded-lg p-1 border border-white/5 shadow-sm">

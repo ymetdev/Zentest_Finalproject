@@ -30,7 +30,7 @@ import TestCaseForm from './components/TestCaseForm';
 import APITable from './components/APITable';
 import APIForm from './components/APIForm';
 import Dashboard from './components/Dashboard';
-import LandingPage from './components/LandingPage';
+const LandingPage = React.lazy(() => import('./components/LandingPage'));
 import ConfirmModal from './components/ui/ConfirmModal';
 import CommentsDrawer from './components/CommentsDrawer';
 import LicenseRedemption from './components/LicenseRedemption';
@@ -45,8 +45,8 @@ import { useProjects } from './hooks/useProjects';
 import { useProjectData } from './hooks/useProjectData';
 import { useTestFilters } from './hooks/useTestFilters';
 import { LicenseService } from './services/license';
-import { AdminPortal } from './components/admin/AdminPortal';
-import { AdminDashboard } from './components/admin/AdminDashboard';
+const AdminPortal = React.lazy(() => import('./components/admin/AdminPortal').then(module => ({ default: module.AdminPortal })));
+const AdminDashboard = React.lazy(() => import('./components/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 import { ADMIN_EMAIL } from './services/admin';
 import QuotaModal from './components/ui/QuotaModal';
 
@@ -635,7 +635,9 @@ export default function App() {
   if (isAdminDashboard && user?.email === ADMIN_EMAIL) {
     return (
       <>
-        <AdminDashboard onLogout={handleAppLogout} onBackToPortal={() => { setIsAdminDashboard(false); setIsAdminPortal(true); }} />
+        <React.Suspense fallback={<div className="h-screen bg-black flex items-center justify-center text-white font-mono text-xs animate-pulse">LOADING ADMIN...</div>}>
+          <AdminDashboard onLogout={handleAppLogout} onBackToPortal={() => { setIsAdminDashboard(false); setIsAdminPortal(true); }} />
+        </React.Suspense>
         {confirmConfig && (
           <ConfirmModal
             isOpen={true}
@@ -660,12 +662,14 @@ export default function App() {
   if (isAdminPortal && user?.email === ADMIN_EMAIL) {
     return (
       <>
-        <AdminPortal
-          user={user}
-          onLogout={handleAppLogout}
-          onSelectStudio={() => { setIsAdminPortal(false); setIsInStudio(true); }}
-          onSelectAdmin={() => { setIsAdminPortal(false); setIsAdminDashboard(true); }}
-        />
+        <React.Suspense fallback={<div className="h-screen bg-black flex items-center justify-center text-white font-mono text-xs animate-pulse">LOADING PORTAL...</div>}>
+          <AdminPortal
+            user={user}
+            onLogout={handleAppLogout}
+            onSelectStudio={() => { setIsAdminPortal(false); setIsInStudio(true); }}
+            onSelectAdmin={() => { setIsAdminPortal(false); setIsAdminDashboard(true); }}
+          />
+        </React.Suspense>
         {confirmConfig && (
           <ConfirmModal
             isOpen={true}
@@ -711,24 +715,26 @@ export default function App() {
   if (!user || !isInStudio) {
     return (
       <>
-        <LandingPage
-          user={user}
-          onLogin={handleLogin}
-          onDemo={handleDemoLogin}
-          onEnterStudio={() => {
-            setIsBooting(true);
-            setTimeout(() => {
-              if (user?.email === ADMIN_EMAIL) {
-                setIsAdminPortal(true);
-              } else {
-                setIsInStudio(true);
-              }
-              setIsBooting(false);
-            }, 1500);
-          }}
-          onLogout={handleAppLogout}
-          onLicense={() => setIsLicenseModalOpen(true)}
-        />
+        <React.Suspense fallback={<div className="h-screen bg-[#050505] flex items-center justify-center text-white/40 font-mono text-xs animate-pulse">LOADING STUDIO...</div>}>
+          <LandingPage
+            user={user}
+            onLogin={handleLogin}
+            onDemo={handleDemoLogin}
+            onEnterStudio={() => {
+              setIsBooting(true);
+              setTimeout(() => {
+                if (user?.email === ADMIN_EMAIL) {
+                  setIsAdminPortal(true);
+                } else {
+                  setIsInStudio(true);
+                }
+                setIsBooting(false);
+              }, 1500);
+            }}
+            onLogout={handleAppLogout}
+            onLicense={() => setIsLicenseModalOpen(true)}
+          />
+        </React.Suspense>
         {confirmConfig && (
           <ConfirmModal
             isOpen={true}

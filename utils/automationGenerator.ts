@@ -28,8 +28,10 @@ export const generatePlaywrightScript = (steps: any[]): string => {
                     script += `  await page.locator('.${selector}').first().click();\n`;
                 } else if (step.text && step.tagName) {
                     script += `  await page.locator('${step.tagName.toLowerCase()}:has-text("${step.text.replace(/\n/g, ' ')}")').first().click();\n`;
+                } else if (step.tagName) {
+                    script += `  await page.locator('${step.tagName.toLowerCase()}').nth(0).click(); // Fallback selector\n`;
                 } else {
-                    script += `  // TODO: improved selector strategy needed for this step\n`;
+                    script += `  // WARNING: No valid selector found. Skipping action.\n`;
                 }
                 break;
 
@@ -43,8 +45,10 @@ export const generatePlaywrightScript = (steps: any[]): string => {
                     script += `  await page.locator('[name="${step.name}"]').fill('${value}');\n`;
                 } else if (step.placeholder) {
                     script += `  await page.locator('[placeholder="${step.placeholder}"]').fill('${value}');\n`;
+                } else if (step.tagName) {
+                    script += `  await page.locator('${step.tagName.toLowerCase()}').nth(0).fill('${value}'); // Fallback selector\n`;
                 } else {
-                    script += `  // TODO: improved selector strategy needed for this step\n`;
+                    script += `  // WARNING: No valid selector found. Skipping action.\n`;
                 }
                 break;
 
