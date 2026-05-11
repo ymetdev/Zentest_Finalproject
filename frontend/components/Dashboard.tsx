@@ -10,7 +10,7 @@ interface DashboardProps {
     testCases: TestCase[];
     apiTestCases: APITestCase[];
     projectName?: string;
-    projectId?: string | null;
+    activeProjectId?: string | null;
 }
 
 const COLORS = {
@@ -29,7 +29,7 @@ const PRIORITY_COLORS = {
     Low: '#3b82f6'       // blue-500
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ testCases, apiTestCases, projectName, projectId }) => {
+const Dashboard: React.FC<DashboardProps> = ({ testCases, apiTestCases, projectName, activeProjectId }) => {
 
     const stats = useMemo(() => {
         const all = [...testCases, ...apiTestCases];
@@ -68,7 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({ testCases, apiTestCases, projectN
                 <div>
                     <h2 className="text-2xl font-black text-white tracking-tight">Project Overview</h2>
                     <p className="text-white/40 text-xs font-bold uppercase tracking-[0.2em]">
-                        Context: <span className="text-indigo-400">{projectName || 'General'}</span> {projectId && `[${projectId}]`}
+                        Context: <span className="text-indigo-400">{projectName || 'General'}</span> {activeProjectId && `[${activeProjectId}]`}
                     </p>
                 </div>
                 <div className="text-right">
