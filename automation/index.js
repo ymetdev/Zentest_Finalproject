@@ -403,6 +403,22 @@ app.post('/run', async (req, res) => {
                     if (selector) {
                         await page.locator(selector).waitFor({ state: 'visible', timeout: 500 });
                     }
+                } else if (step.type === 'SCROLL') {
+                    // Scroll the page to the recorded position
+                    await page.evaluate(
+                        ({ x, y }) => window.scrollTo(x, y),
+                        { x: step.scrollX || 0, y: step.scrollY || 0 }
+                    );
+                } else if (step.type === 'KEYDOWN') {
+                    // Handle keyboard inputs recorded by the extension
+                    const selector = step.xpath ? `xpath=${step.xpath}` : step.id ? `#${step.id}` : null;
+                    if (step.key === 'Enter') {
+                        if (selector) {
+                            await page.locator(selector).press('Enter', { timeout: 500 });
+                        } else {
+                            await page.keyboard.press('Enter');
+                        }
+                    }
                 }
 
                 const duration = Date.now() - startTime;
@@ -463,7 +479,6 @@ app.post('/run', async (req, res) => {
                 } catch (err) {}
 
                 logs.push(`${logPrefix} Failed: ${userFriendlyError}`);
-                try { await browser.close(); } catch (e) { }
 
                 return res.json({
                     status: 'failed',

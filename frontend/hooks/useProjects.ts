@@ -26,6 +26,9 @@ export const useProjects = (user: any) => {
             return;
         }
 
+        // Track inner snapshot to prevent memory leaks from nested onSnapshot
+        let unsubPublic: (() => void) | null = null;
+
         const myProjectsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'myProjects');
         const unsubMyProjects = onSnapshot(myProjectsRef, (snapshot) => {
             const myRoles = new Map<string, string>();
@@ -33,13 +36,20 @@ export const useProjects = (user: any) => {
                 myRoles.set(d.id, d.data().role);
             });
 
+            // Cleanup previous inner snapshot BEFORE creating a new one
+            if (unsubPublic) {
+                unsubPublic();
+                unsubPublic = null;
+            }
+
             const projectIds = Array.from(myRoles.keys());
             if (projectIds.length === 0) {
                 setProjects([]);
                 return;
             }
+
             const publicProjectsRef = collection(db, 'artifacts', appId, 'public', 'data', 'projects');
-            const unsubPublic = onSnapshot(publicProjectsRef, (s) => {
+            unsubPublic = onSnapshot(publicProjectsRef, (s) => {
                 const allPublic = s.docs.map(d => ({ id: d.id, ...d.data() } as Project));
                 const myData = allPublic
                     .filter(p => projectIds.includes(p.id))
@@ -49,7 +59,6 @@ export const useProjects = (user: any) => {
                     }));
 
                 setProjects(myData);
-                // Only auto-select if no active project or active one is gone
                 if (myData.length > 0) {
                     setActiveProjectId((prev: string | null) => {
                         const stillExists = myData.find(p => p.id === prev);
@@ -59,9 +68,12 @@ export const useProjects = (user: any) => {
                     setActiveProjectId(null);
                 }
             });
-            return () => unsubPublic();
         });
-        return () => unsubMyProjects();
+
+        return () => {
+            unsubMyProjects();
+            if (unsubPublic) unsubPublic();
+        };
     }, [user]);
 
     const handleProjectSave = async (data: any, projectModalMode: ModalMode) => {

@@ -15,11 +15,6 @@ export const useAuth = () => {
     const [loginError, setLoginError] = useState<string | null>(null);
 
     useEffect(() => {
-        const initAuth = async () => {
-            // ... existing init logic if any
-        };
-        initAuth();
-
         if (isConfigured) {
             return onAuthStateChanged(auth, (u) => {
                 setUser(u);
@@ -32,9 +27,6 @@ export const useAuth = () => {
             setAuthLoading(false);
         }
     }, []);
-
-    // Sync User Profile Data (Subscription)
-
 
     // Sync User Profile Data (Subscription)
     useEffect(() => {

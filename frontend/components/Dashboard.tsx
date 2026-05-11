@@ -9,6 +9,8 @@ import { Activity, CheckCircle2, XCircle, AlertCircle, Clock } from 'lucide-reac
 interface DashboardProps {
     testCases: TestCase[];
     apiTestCases: APITestCase[];
+    projectName?: string;
+    projectId?: string | null;
 }
 
 const COLORS = {
@@ -27,7 +29,7 @@ const PRIORITY_COLORS = {
     Low: '#3b82f6'       // blue-500
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ testCases, apiTestCases }) => {
+const Dashboard: React.FC<DashboardProps> = ({ testCases, apiTestCases, projectName, projectId }) => {
 
     const stats = useMemo(() => {
         const all = [...testCases, ...apiTestCases];
@@ -62,6 +64,18 @@ const Dashboard: React.FC<DashboardProps> = ({ testCases, apiTestCases }) => {
 
     return (
         <div className="p-6 h-full overflow-y-auto custom-scrollbar space-y-6">
+            <div className="flex justify-between items-end mb-2">
+                <div>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Project Overview</h2>
+                    <p className="text-white/40 text-xs font-bold uppercase tracking-[0.2em]">
+                        Context: <span className="text-indigo-400">{projectName || 'General'}</span> {projectId && `[${projectId}]`}
+                    </p>
+                </div>
+                <div className="text-right">
+                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Last Synced: {new Date().toLocaleTimeString()}</span>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Metric Cards */}
                 <div className="bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/5 p-4 rounded-sm shadow-lg flex flex-col gap-2 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300 hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards delay-0">

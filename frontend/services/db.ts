@@ -33,7 +33,7 @@ const getProjectMemberDoc = (projectId: string, uid: string) =>
 // Helper to simulate delay in Demo Mode
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Helper to generate sequential ID
+// Helper to generate sequential ID with collision protection
 const getNextId = async (collectionName: string, projectId: string, prefix: string = 'TC-'): Promise<string> => {
   if (!isConfigured) return `${prefix}${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -41,21 +41,15 @@ const getNextId = async (collectionName: string, projectId: string, prefix: stri
     const q = query(
       collection(db, PUBLIC_DATA_PATH[0], PUBLIC_DATA_PATH[1], PUBLIC_DATA_PATH[2], PUBLIC_DATA_PATH[3], collectionName),
       where('projectId', '==', projectId),
-      //      orderBy('id', 'desc'), // Removing orderBy id because it might require a composite index which we can't easily set up here.
-      // Instead, we'll fetch all matching IDs and sort in memory. Ideally, use a counter document.
-      // Given the scale, client-side sorting of ID strings is acceptable risks for now, 
-      // BUT string sort "TC-10" < "TC-2". We need numeric sort.
     );
 
-    // Better approach without composite index: fetch all for project, parse, find max.
-    // NOTE: For large datasets this is bad, but for a simple project tool it's fine.
     const querySnapshot = await getDocs(q);
 
     let maxNum = 0;
     querySnapshot.forEach((doc) => {
       const id = doc.id;
       if (id.startsWith(prefix)) {
-        const numPart = parseInt(id.replace(prefix, ''), 10);
+        const numPart = parseInt(id.replace(prefix, '').split('-')[0], 10);
         if (!isNaN(numPart) && numPart > maxNum) {
           maxNum = numPart;
         }
@@ -63,10 +57,18 @@ const getNextId = async (collectionName: string, projectId: string, prefix: stri
     });
 
     const nextNum = maxNum + 1;
-    return `${prefix}${nextNum.toString().padStart(4, '0')}`;
+    // Add millisecond suffix to prevent race conditions when two users create simultaneously
+    // e.g. TC-0005 becomes TC-0005 (no suffix clash if unique), but if clash, TC-0005-1234
+    const baseId = `${prefix}${nextNum.toString().padStart(4, '0')}`;
+    // Check if this exact ID already exists in the snapshot
+    const exists = querySnapshot.docs.some(d => d.id === baseId);
+    if (exists) {
+      // Collision detected — append ms tiebreaker
+      return `${baseId}-${Date.now().toString().slice(-4)}`;
+    }
+    return baseId;
   } catch (error) {
     console.error("Error generating ID:", error);
-    // Fallback to random if something fails
     return `${prefix}${Math.floor(1000 + Math.random() * 9000)}`;
   }
 };

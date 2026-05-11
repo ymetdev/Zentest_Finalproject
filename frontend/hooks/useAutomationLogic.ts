@@ -55,6 +55,7 @@ export const useAutomationLogic = (user: any, activeProjectId: string | null, up
 
             if (result.status === 'success') {
                 log(`>>> AUTOMATION FLOW COMPLETED SUCCESSFULLY`, 'success');
+                const isTemp = testCase.id.startsWith('TEMP-');
                 const nextRound = (testCase.round || 1) + 1;
                 const finalData = {
                     ...testCase,
@@ -64,18 +65,23 @@ export const useAutomationLogic = (user: any, activeProjectId: string | null, up
                     actualResult: 'ระบบทำงานได้ถูกต้องตามขั้นตอนที่กำหนด'
                 };
 
-                await TestCaseService.save(finalData, false, user);
-                await ExecutionHistoryService.add({
-                    testCaseId: testCase.id,
-                    projectId: activeProjectId || '',
-                    type: 'functional',
-                    status: 'Passed',
-                    duration: 0,
-                    timestamp: Date.now(),
-                    executedBy: user.uid,
-                    executedByName: user.displayName || 'Unknown',
-                    logs: result.logs || []
-                });
+                // Skip Firestore save for demo users or temporary cases
+                if (user?.uid === 'demo-user' || isTemp) {
+                    updateStatus(testCase.id, 'Passed', 'functional');
+                } else {
+                    await TestCaseService.save(finalData, false, user);
+                    await ExecutionHistoryService.add({
+                        testCaseId: testCase.id,
+                        projectId: activeProjectId || '',
+                        type: 'functional',
+                        status: 'Passed',
+                        duration: 0,
+                        timestamp: Date.now(),
+                        executedBy: user.uid,
+                        executedByName: user.displayName || 'Unknown',
+                        logs: result.logs || []
+                    });
+                }
                 if (!isBulk) setExecutingId(null);
                 return result;
             } else {
@@ -89,18 +95,23 @@ export const useAutomationLogic = (user: any, activeProjectId: string | null, up
                     actualResult: `เกิดข้อผิดพลาด: ${result.message || 'ไม่สามารถดำเนินการตามขั้นตอนได้'}`
                 };
 
-                await TestCaseService.save(failedData, false, user);
-                await ExecutionHistoryService.add({
-                    testCaseId: testCase.id,
-                    projectId: activeProjectId || '',
-                    type: 'functional',
-                    status: 'Failed',
-                    duration: 0,
-                    timestamp: Date.now(),
-                    executedBy: user.uid,
-                    executedByName: user.displayName || 'Unknown',
-                    logs: result.logs || [result.message]
-                });
+                // Skip Firestore save for demo users
+                if (user?.uid === 'demo-user') {
+                    updateStatus(testCase.id, 'Failed', 'functional');
+                } else {
+                    await TestCaseService.save(failedData, false, user);
+                    await ExecutionHistoryService.add({
+                        testCaseId: testCase.id,
+                        projectId: activeProjectId || '',
+                        type: 'functional',
+                        status: 'Failed',
+                        duration: 0,
+                        timestamp: Date.now(),
+                        executedBy: user.uid,
+                        executedByName: user.displayName || 'Unknown',
+                        logs: result.logs || [result.message]
+                    });
+                }
                 if (!isBulk) setExecutingId(null);
                 return result;
             }
@@ -144,17 +155,20 @@ export const useAutomationLogic = (user: any, activeProjectId: string | null, up
 
             await updateStatus(testCase.id, status, 'api', { actualStatus: result.status, round: nextRound });
 
-            await ExecutionHistoryService.add({
-                testCaseId: testCase.id,
-                projectId: activeProjectId || '',
-                type: 'api',
-                status: status,
-                duration: result.duration || 0,
-                timestamp: Date.now(),
-                executedBy: user.uid,
-                executedByName: user.displayName || 'Unknown',
-                logs: [`Status: ${result.status}`, `Time: ${result.duration}ms`]
-            });
+            // Skip history save for demo users
+            if (user?.uid !== 'demo-user') {
+                await ExecutionHistoryService.add({
+                    testCaseId: testCase.id,
+                    projectId: activeProjectId || '',
+                    type: 'api',
+                    status: status,
+                    duration: result.duration || 0,
+                    timestamp: Date.now(),
+                    executedBy: user.uid,
+                    executedByName: user.displayName || 'Unknown',
+                    logs: [`Status: ${result.status}`, `Time: ${result.duration}ms`]
+                });
+            }
 
             setLastApiResponse(result);
             if (!isBulk) setExecutingId(null);

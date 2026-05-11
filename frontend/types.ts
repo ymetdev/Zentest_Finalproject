@@ -41,8 +41,6 @@ export interface TestCase {
   status: Status;
   steps: string[];
   expected: string;
-  script: string;
-  description?: string;
   hasAutomation: boolean;
   automationSteps?: any[];
   actualResult?: string;
@@ -66,9 +64,7 @@ export interface APITestCase {
   url: string;
   headers?: { key: string; value: string }[];
   body?: string;
-  description?: string;
   expectedStatus: number;
-  expectedBody?: string;
   actualStatus?: number;
   lastUpdatedBy?: string;
   lastUpdatedByName?: string;

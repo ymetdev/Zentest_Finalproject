@@ -52,7 +52,14 @@ service cloud.firestore {
 
        match /members/{memberId} {
          allow read: if isAuthenticated();
-         allow write: if isAuthenticated() && (get(/databases/$(database)/documents/artifacts/$(appId)/public/data/projects/$(projectId)).data.owner == request.auth.uid || isAdmin());
+         // Owner and Admin can write all member docs.
+         // Members can write THEIR OWN doc (for presence heartbeat & access requests).
+         allow write: if isAuthenticated() &&
+           (
+             get(/databases/$(database)/documents/artifacts/$(appId)/public/data/projects/$(projectId)).data.owner == request.auth.uid ||
+             request.auth.uid == memberId ||
+             isAdmin()
+           );
        }
     }
 

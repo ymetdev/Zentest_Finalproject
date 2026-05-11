@@ -31,9 +31,17 @@ export const AdminService = {
     },
 
     async getAllKeys(): Promise<LicenseKey[]> {
-        const q = query(collection(db, 'licenseKeys'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(d => d.data() as LicenseKey);
+        try {
+            const q = query(collection(db, 'licenseKeys'), orderBy('createdAt', 'desc'));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(d => d.data() as LicenseKey);
+        } catch (e: any) {
+            // Fallback without ordering if composite index doesn't exist yet
+            console.warn('[AdminService] orderBy index missing, fetching unordered:', e.message);
+            const snapshot = await getDocs(collection(db, 'licenseKeys'));
+            const keys = snapshot.docs.map(d => d.data() as LicenseKey);
+            return keys.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        }
     },
 
     // --- User Management ---
@@ -48,19 +56,29 @@ export const AdminService = {
     },
 
     async searchUser(emailOrUid: string): Promise<any | null> {
-        // Try by UID first
+        // Strategy 1: Try by UID (fast — direct doc lookup)
         const docRef = doc(db, 'users', emailOrUid);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() };
+            return { uid: docSnap.id, ...docSnap.data() };
         }
 
-        // Try by users (Assuming we stored email in user doc? We might not have. 
-        // If not, we can only really search by UID unless we index emails.)
-        // Note: The current App implementation doesn't explicitly save email to 'users' collection 
-        // unless added manually. Default 'users' doc likely only has tier info.
-        // We should probably rely on UID for now, or update App to store email.
+        // Strategy 2: Try by email via query (requires 'email' field to be indexed)
+        try {
+            const q = query(
+                collection(db, 'users'),
+                where('email', '==', emailOrUid.toLowerCase().trim())
+            );
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const d = snap.docs[0];
+                return { uid: d.id, ...d.data() };
+            }
+        } catch (e: any) {
+            console.warn('[AdminService] Email search failed (index may be missing):', e.message);
+        }
+
         return null;
     },
 

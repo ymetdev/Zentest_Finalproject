@@ -36,6 +36,8 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
         return () => unsub();
     }, [activeProjectId, user]);
 
+    const isDemo = user?.uid === 'demo-user';
+
     // Actions
     const handleTestCaseSave = async (data: Partial<TestCase>, isNew: boolean) => {
         const audit = {
@@ -49,6 +51,18 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
         // auto-create module if it doesn't exist
         if (data.module && data.module.trim() !== '' && !modules.some(m => m.name.toLowerCase() === data.module!.toLowerCase())) {
             await handleAddModule(data.module);
+        }
+
+        if (isDemo) {
+            // Demo mode: local state only
+            if (isNew) {
+                const tempId = `TEMP-${Date.now()}`;
+                const newCase = { ...payload, id: tempId, projectId: activeProjectId || '' } as TestCase;
+                setTestCases((prev: TestCase[]) => [...prev, newCase]);
+            } else if (data.id) {
+                setTestCases((prev: TestCase[]) => prev.map(c => c.id === data.id ? { ...c, ...payload } as TestCase : c));
+            }
+            return;
         }
 
         // Optimistic Update
@@ -73,6 +87,18 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
             await handleAddModule(data.module);
         }
 
+        if (isDemo) {
+            // Demo mode: local state only
+            if (isNew) {
+                const tempId = `TEMP-${Date.now()}`;
+                const newCase = { ...payload, id: tempId, projectId: activeProjectId || '' } as APITestCase;
+                setApiTestCases((prev: APITestCase[]) => [...prev, newCase]);
+            } else if (data.id) {
+                setApiTestCases((prev: APITestCase[]) => prev.map(c => c.id === data.id ? { ...c, ...payload } as APITestCase : c));
+            }
+            return;
+        }
+
         // Optimistic Update
         if (!isNew && data.id) {
             setApiTestCases((prev: APITestCase[]) => prev.map(c => c.id === data.id ? { ...c, ...payload } as APITestCase : c));
@@ -83,12 +109,21 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
 
     const deleteItems = async (ids: Set<string>, viewMode: 'functional' | 'api') => {
         const idsToDelete = Array.from(ids);
+        if (isDemo) {
+            // Demo mode: local state only
+            if (viewMode === 'functional') {
+                setTestCases((prev: TestCase[]) => prev.filter(c => !idsToDelete.includes(c.id)));
+            } else {
+                setApiTestCases((prev: APITestCase[]) => prev.filter(c => !idsToDelete.includes(c.id)));
+            }
+            return;
+        }
         if (viewMode === 'functional') await Promise.all(idsToDelete.map(id => TestCaseService.delete(id)));
         else await Promise.all(idsToDelete.map(id => APITestCaseService.delete(id)));
     };
 
     const updateStatus = async (id: string, status: 'Passed' | 'Failed', type: 'functional' | 'api', extraData: any = {}) => {
-        // Optimistic Update
+        // Optimistic Update (works for both demo and real users)
         const update = { status, ...extraData, timestamp: Date.now(), lastUpdatedBy: user?.uid, lastUpdatedByName: user?.displayName || 'Guest' };
         if (type === 'functional') {
             setTestCases((prev: TestCase[]) => prev.map(c => c.id === id ? { ...c, ...update } as TestCase : c));
@@ -96,20 +131,25 @@ export const useProjectData = (user: any, activeProjectId: string | null) => {
             setApiTestCases((prev: APITestCase[]) => prev.map(c => c.id === id ? { ...c, ...update } : c));
         }
 
+        if (isDemo) return; // Demo mode: skip Firestore write
+
         if (type === 'functional') await TestCaseService.updateStatus(id, status, user);
         else await APITestCaseService.updateStatus(id, status, user, extraData);
     };
 
     const handleAddModule = async (name: string) => {
         if (!activeProjectId) return;
+        if (isDemo) return; // Demo mode: modules are discovered from cases automatically
         await ModuleService.add(name, activeProjectId);
     };
 
     const handleUpdateModule = async (id: string, name: string) => {
+        if (isDemo) return;
         await ModuleService.update(id, name);
     };
 
     const handleDeleteModule = async (id: string) => {
+        if (isDemo) return;
         await ModuleService.delete(id);
     };
 

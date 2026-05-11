@@ -20,6 +20,7 @@ import {
 import { auth, db, appId, isConfigured } from './firebase';
 import { Project, Module, TestCase, APITestCase, LogEntry, ModalMode, STATUSES, Comment, Status, ProjectMember } from './types';
 import { ProjectService, TestCaseService, APITestCaseService, ModuleService, CommentService, UserReadStatusService, ExecutionHistoryService } from './services/db';
+import { useAutomationLogic } from './hooks/useAutomationLogic';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -118,13 +119,13 @@ export default function App() {
       if (link.viewMode === 'functional') {
         const tc = testCases.find(c => c.id === link.caseId);
         if (tc) {
-          setActiveCommentCase({ id: tc.id, title: tc.title, commentCount: tc.commentCount });
+          setActiveCommentCase({ id: tc.id, title: tc.title, commentCount: tc.commentCount, type: 'functional' });
           setIsCommentDrawerOpen(true);
         }
       } else if (link.viewMode === 'api') {
         const tc = apiTestCases.find(c => c.id === link.caseId);
         if (tc) {
-          setActiveCommentCase({ id: tc.id, title: tc.title, commentCount: tc.commentCount });
+          setActiveCommentCase({ id: tc.id, title: tc.title, commentCount: tc.commentCount, type: 'api' });
           setIsCommentDrawerOpen(true);
         }
       }
@@ -136,15 +137,20 @@ export default function App() {
 
   // Comments
   const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
-  const [activeCommentCase, setActiveCommentCase] = useState<{ id: string; title: string; commentCount?: number } | null>(null); // Added commentCount
+  const [activeCommentCase, setActiveCommentCase] = useState<{ id: string; title: string; commentCount?: number; type: 'functional' | 'api' } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
 
   // Execution
-  const [executingId, setExecutingId] = useState<string | null>(null);
-  const [lastApiResponse, setLastApiResponse] = useState<any>(null);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
-  const [isHeadless, setIsHeadless] = useState(false);
+  const {
+    executingId, setExecutingId,
+    lastApiResponse, setLastApiResponse,
+    logs, setLogs,
+    isTerminalOpen, setIsTerminalOpen,
+    isHeadless, setIsHeadless,
+    log,
+    handleRunAutomation,
+    handleRunApiTestCase
+  } = useAutomationLogic(user, activeProjectId, updateStatus);
 
   // UseEffects for Comments (Specific to UI Drawer)
   useEffect(() => {
@@ -163,10 +169,6 @@ export default function App() {
 
   // --- Helpers ---
   const activeProject = useMemo(() => projects.find(p => p.id === activeProjectId), [projects, activeProjectId]);
-
-  const log = (msg: string, type: 'info' | 'success' | 'error' = 'info') => {
-    setLogs(prev => [...prev, { msg: `[${new Date().toLocaleTimeString()}] ${msg}`, type }]);
-  };
 
   const handleLoginWrapper = async () => {
     await handleLogin();
@@ -284,211 +286,6 @@ export default function App() {
     document.body.removeChild(link);
   };
 
-  const handleRunAutomation = async (testCase: TestCase, isBulk = false) => {
-    setExecutingId(testCase.id);
-    if (!isBulk) {
-      setLogs([]);
-      setIsTerminalOpen(true);
-    }
-    log(`Initializing Compass Automation Engine...`);
-    log(`Connecting to local automation server at http://localhost:3002...`);
-
-    try {
-      const steps = testCase.automationSteps || [];
-      if (steps.length === 0) {
-        log(`Error: No automation steps found. Please import JSON in Automation Hub.`, 'error');
-        setExecutingId(null);
-        return false;
-      }
-
-      log(`Transmitting ${steps.length} execution nodes to headed browser context...`);
-
-      const response = await fetch('http://localhost:3002/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ steps, headless: isHeadless })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || `Server returned ${response.status}`);
-      }
-
-      if (result.logs) {
-        result.logs.forEach((l: string) => {
-          if (l.includes('Success')) log(l, 'success');
-          else if (l.includes('Failed')) log(l, 'error');
-          else log(l);
-        });
-      }
-
-      if (result.status === 'success') {
-        log(`>>> AUTOMATION FLOW COMPLETED SUCCESSFULLY`, 'success');
-        const isTemp = testCase.id.startsWith('TEMP-');
-
-        const nextRound = (testCase.round || 1) + 1;
-        const finalData = {
-          ...testCase,
-          status: 'Passed' as Status,
-          round: nextRound,
-          screenshots: result.screenshots || [],
-          actualResult: 'ระบบทำงานได้ถูกต้องตามขั้นตอนที่กำหนด'
-        };
-
-        if (user.uid === 'demo-user' || isTemp) {
-          updateStatus(testCase.id, 'Passed', 'functional');
-        } else {
-          await TestCaseService.save(finalData, false, user);
-          await ExecutionHistoryService.add({
-            testCaseId: testCase.id,
-            projectId: activeProjectId || '',
-            type: 'functional',
-            status: 'Passed',
-            duration: 0, // We don't track duration yet in functional, maybe 0 or add it later
-            timestamp: Date.now(),
-            executedBy: user.uid,
-            executedByName: user.displayName || 'Unknown',
-            logs: result.logs || []
-          });
-        }
-        if (!isBulk) setExecutingId(null);
-        return result; // RETURN FULL RESULT
-      } else {
-        log(`>>> AUTOMATION FLOW FAILED: ${result.message}`, 'error');
-        const nextRound = (testCase.round || 1) + 1;
-        const failedData = {
-          ...testCase,
-          status: 'Failed' as Status,
-          round: nextRound,
-          screenshots: result.screenshots || [],
-          actualResult: `เกิดข้อผิดพลาด: ${result.message || 'ไม่สามารถดำเนินการตามขั้นตอนได้'}`
-        };
-
-        if (user.uid === 'demo-user') {
-          updateStatus(testCase.id, 'Failed', 'functional');
-        } else {
-          await TestCaseService.save(failedData, false, user);
-          await ExecutionHistoryService.add({
-            testCaseId: testCase.id,
-            projectId: activeProjectId || '',
-            type: 'functional',
-            status: 'Failed',
-            duration: 0,
-            timestamp: Date.now(),
-            executedBy: user.uid,
-            executedByName: user.displayName || 'Unknown',
-            logs: result.logs || [result.message]
-          });
-        }
-        if (!isBulk) setExecutingId(null);
-        return result; // RETURN FULL RESULT
-      }
-    } catch (error: any) {
-      log(`CRITICAL ERROR: ${error.message}`, 'error');
-
-      const isNetworkError = error.message.toLowerCase().includes('fetch') ||
-        error.message.toLowerCase().includes('network') ||
-        error.message.toLowerCase().includes('failed');
-
-      if (isNetworkError) {
-        log(`Suggestion: Please check if the automation server is running on port 3002 (npm start in /automation-server)`, 'error');
-      }
-      if (!isBulk) setExecutingId(null);
-      return { status: 'failed', message: error.message }; // RETURN ERROR RESULT
-    }
-  };
-
-  const handleRunApiTestCase = async (testCase: APITestCase, isBulk = false) => {
-    setExecutingId(testCase.id);
-    if (!isBulk) {
-      setLogs([]);
-      setIsTerminalOpen(true);
-    }
-
-    log(`Initializing API Execution for: ${testCase.title}...`);
-    log(`Method: ${testCase.method} | URL: ${testCase.url}`);
-
-    try {
-      const response = await fetch('http://localhost:3002/run-api', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method: testCase.method,
-          url: testCase.url,
-          headers: testCase.headers?.reduce((acc: any, h: any) => ({ ...acc, [h.key]: h.value }), {}),
-          body: testCase.body
-        })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) throw new Error(result.error || result.message || 'Unknown Server Error');
-
-      const isSuccess = result.status >= 200 && result.status < 300;
-      log(`--------------------------------------------------`);
-      log(`Response Status: ${result.status} ${result.statusText}`, isSuccess ? 'success' : 'error');
-      log(`Duration: ${result.duration}ms`);
-
-      if (result.data) {
-        log(`\n[RESPONSE BODY]`);
-        const formattedBody = typeof result.data === 'object'
-          ? JSON.stringify(result.data, null, 2)
-          : String(result.data).length > 500
-            ? String(result.data).substring(0, 500) + '... (truncated)'
-            : result.data;
-        log(formattedBody);
-      }
-      log(`--------------------------------------------------`);
-
-      // Check Expectation
-      const expected = parseInt(String(testCase.expectedStatus)) || 200;
-      const passed = result.status === expected;
-
-      if (!passed) {
-        log(`EXPECTATION FAILED: Expected ${expected}, but got ${result.status}`, 'error');
-      }
-
-      const status = passed ? 'Passed' : 'Failed';
-      const nextRound = (testCase.round || 1) + 1;
-      await updateStatus(testCase.id, status, 'api', { actualStatus: result.status, round: nextRound });
-
-      // Save History
-      if (user.uid !== 'demo-user') {
-        const historyEntry: any = {
-          testCaseId: testCase.id,
-          projectId: activeProjectId || '',
-          type: 'api',
-          status: status,
-          duration: result.duration || 0,
-          timestamp: Date.now(),
-          executedBy: user.uid,
-          executedByName: user.displayName || 'Unknown',
-          logs: [`Status: ${result.status}`, `Time: ${result.duration}ms`]
-        };
-        await ExecutionHistoryService.add(historyEntry);
-      }
-
-      log(`>>> API TEST ${status.toUpperCase()} <<<`, passed ? 'success' : 'error');
-
-      setLastApiResponse(result);
-      if (!isBulk) setExecutingId(null);
-      return true;
-    } catch (error: any) {
-      log(`Execution Error: ${error.message}`, 'error');
-
-      const isNetworkError = error.message.toLowerCase().includes('fetch') ||
-        error.message.toLowerCase().includes('network') ||
-        error.message.toLowerCase().includes('failed');
-
-      if (isNetworkError) {
-        log(`Suggestion: Check if automation-server is running on port 3002`, 'error');
-      }
-      if (!isBulk) setExecutingId(null);
-      return false;
-    }
-  };
-
   const handleBulkRun = async () => {
     let targetCases: any[] = [];
 
@@ -511,14 +308,19 @@ export default function App() {
       log(`--------------------------------------------------`);
       log(`TRIGGERING: ${tc.id} - ${tc.title}`, 'info');
 
-      let success = false;
+      let runResult: any;
       if (viewMode === 'functional') {
-        success = await handleRunAutomation(tc, true);
+        runResult = await handleRunAutomation(tc, true);
       } else {
-        success = await handleRunApiTestCase(tc, true);
+        runResult = await handleRunApiTestCase(tc, true);
       }
 
-      if (success) passed++;
+      // handleRunAutomation returns an object { status: ... }, handleRunApiTestCase returns boolean
+      const isSuccess = viewMode === 'functional'
+        ? (runResult && runResult.status === 'success')
+        : !!runResult;
+
+      if (isSuccess) passed++;
 
       // Small cooling delay between sessions
       await new Promise(r => setTimeout(r, 1000));
@@ -575,7 +377,7 @@ export default function App() {
           message: content || 'Sent an attachment',
           type: 'comment',
           link: {
-            viewMode: activeCommentCase.commentCount !== undefined ? 'functional' : 'api', // Rough guess based on count presence
+            viewMode: activeCommentCase.type,
             caseId: activeCommentCase.id
           },
           userPhoto: user.photoURL
@@ -1051,6 +853,8 @@ export default function App() {
             <Dashboard
               testCases={testCases}
               apiTestCases={apiTestCases}
+              activeProjectId={activeProjectId}
+              projectName={activeProject?.name}
             />
           ) : viewMode === 'functional' ? (
             <TestCaseTable
@@ -1080,7 +884,7 @@ export default function App() {
               onRun={handleRunAutomation}
               onStatusUpdate={(id: string, s: any) => handleQuickStatusUpdate(id, s, 'functional')}
               onMessage={(tc: TestCase) => {
-                setActiveCommentCase({ id: tc.id, title: tc.title, commentCount: tc.commentCount });
+                setActiveCommentCase({ id: tc.id, title: tc.title, commentCount: tc.commentCount, type: 'functional' });
                 setIsCommentDrawerOpen(true);
                 if (activeProjectId && user) {
                   UserReadStatusService.markRead(activeProjectId, tc.id, tc.commentCount || 0, user.uid);
@@ -1135,7 +939,7 @@ export default function App() {
               onRun={handleRunApiTestCase}
               onStatusUpdate={(id: string, s: any) => handleQuickStatusUpdate(id, s, 'api')}
               onMessage={(tc: APITestCase) => {
-                setActiveCommentCase({ id: tc.id, title: tc.title, commentCount: tc.commentCount });
+                setActiveCommentCase({ id: tc.id, title: tc.title, commentCount: tc.commentCount, type: 'api' });
                 setIsCommentDrawerOpen(true);
                 if (activeProjectId && user) {
                   UserReadStatusService.markRead(activeProjectId, tc.id, tc.commentCount || 0, user.uid);

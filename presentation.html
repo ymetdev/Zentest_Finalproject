@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zentest Presentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Prompt:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #050505;
+            --card: #0a0a0a;
+            --primary: #6366f1;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.6);
+        }
+
+        body {
+            font-family: 'Inter', 'Prompt', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            transition: transform 0.6s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+
+        .slide {
+            min-width: 100vw;
+            height: 100vh;
+            padding: 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-dots {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: var(--primary);
+            transform: scale(1.5);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-nav:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* Animations */
+        .animate-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bug-path {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .bug-step {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .arrow {
+            color: var(--primary);
+        }
+
+        .highlight-box {
+            border-left: 4px solid var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="slide-container" id="slideContainer">
+        
+        <!-- Slide 1: Title -->
+        <section class="slide">
+            <div class="max-w-4xl mx-auto text-center space-y-8 animate-in">
+                <div class="flex justify-center mb-4">
+                    <img src="frontend/public/Zenlogo.png" alt="Logo" class="w-32 h-32 object-contain">
+                </div>
+                <h1 class="text-8xl font-extrabold tracking-tighter gradient-text">ZENTEST</h1>
+                <p class="text-2xl font-light text-white/60 tracking-widest uppercase">Advanced Software Testing Platform</p>
+                <div class="pt-12 space-y-2">
+                    <p class="text-xl font-semibold">จัดทำโดย</p>
+                    <p class="text-lg">นาย ณัฐกิตติ์ รัตนรักษ์ & นาย กิรติ อำมาตย์หิน</p>
+                    <p class="text-white/40">สาขาวิชาวิทยาการคอมพิวเตอร์ | มหาวิทยาลัยรังสิต</p>
+                    <p class="text-white/40 font-mono">ปีการศึกษา 2568</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 2: Project Overview -->
+        <section class="slide bg-zinc-950">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <div class="space-y-4">
+                    <h2 class="text-5xl font-bold">โปรเจ็คเราคืออะไร?</h2>
+                    <div class="h-1.5 w-24 bg-indigo-500 rounded-full"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-12 items-center">
+                    <div class="space-y-6 text-xl leading-relaxed text-white/80">
+                        <p>
+                            <span class="text-indigo-400 font-bold">Zentest</span> คือแพลตฟอร์มบริหารจัดการการทดสอบซอฟต์แวร์แบบครบวงจร (All-in-one Test Management Platform) 
+                            ที่ถูกออกแบบมาเพื่อยกระดับประสิทธิภาพการทำงานของ Tester ยุคใหม่
+                        </p>
+                        <div class="highlight-box">
+                            เน้นความรวบรัด ใช้งานง่าย และรองรับทั้ง Functional Testing และ API Testing ในที่เดียว พร้อมระบบ No-code Automation
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <ul class="space-y-4">
+                            <li class="flex items-center gap-4"><i class="fas fa-check-circle text-emerald-500"></i> จัดการ Test Case อย่างเป็นระบบ</li>
+                            <li class="flex items-center gap-4"><i class="fas fa-check-circle text-emerald-500"></i> ทดสอบ API ได้ทันที</li>
+                            <li class="flex items-center gap-4"><i class="fas fa-check-circle text-emerald-500"></i> ทำ Automation โดยไม่ต้องเขียนโค้ด</li>
+                            <li class="flex items-center gap-4"><i class="fas fa-check-circle text-emerald-500"></i> สรุปภาพรวมด้วย Dashboard Real-time</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: Software Tester Context -->
+        <section class="slide">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <div class="space-y-4">
+                    <h2 class="text-5xl font-bold">Software Tester คือใคร?</h2>
+                    <p class="text-xl text-white/40">บทบาทและหน้าที่ในทีมพัฒนา</p>
+                </div>
+                <div class="grid grid-cols-3 gap-8">
+                    <div class="glass-card text-center space-y-4 border-b-4 border-indigo-500">
+                        <i class="fas fa-user-shield text-4xl text-indigo-500"></i>
+                        <h3 class="text-2xl font-bold">Guardian of Quality</h3>
+                        <p class="text-sm text-white/60">ตรวจสอบและควบคุมคุณภาพของซอฟต์แวร์ให้เป็นไปตาม Requirements</p>
+                    </div>
+                    <div class="glass-card text-center space-y-4 border-b-4 border-emerald-500">
+                        <i class="fas fa-search text-4xl text-emerald-500"></i>
+                        <h3 class="text-2xl font-bold">Defect Finder</h3>
+                        <p class="text-sm text-white/60">ค้นหาจุดบกพร่อง (Bug) ก่อนที่ซอฟต์แวร์จะถึงมือผู้ใช้งานจริง</p>
+                    </div>
+                    <div class="glass-card text-center space-y-4 border-b-4 border-amber-500">
+                        <i class="fas fa-sync text-4xl text-amber-500"></i>
+                        <h3 class="text-2xl font-bold">Continuous Improver</h3>
+                        <p class="text-sm text-white/60">ให้ Feedback เพื่อนำไปปรับปรุงระบบให้ดียิ่งขึ้น</p>
+                    </div>
+                </div>
+                <div class="mt-8 p-6 bg-white/5 rounded-xl">
+                    <h4 class="font-bold mb-4">หน้าที่หลัก:</h4>
+                    <div class="flex gap-12">
+                        <div>
+                            <span class="text-indigo-400 font-bold">● เทสหน้าบ้าน (Frontend):</span> ตรวจสอบ UI/UX และการทำงานของหน้าจอ
+                        </div>
+                        <div>
+                            <span class="text-emerald-400 font-bold">● เทส API (Backend):</span> ตรวจสอบการรับส่งข้อมูลและความถูกต้องของ Logic
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Testing Types & Lifecycle -->
+        <section class="slide bg-zinc-950">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <div class="flex justify-between items-end">
+                    <h2 class="text-5xl font-bold">Manual vs Automation</h2>
+                    <div class="flex gap-4">
+                        <span class="px-4 py-2 bg-white/5 rounded-full text-sm font-mono text-white/40">Bug Lifecycle Knowledge</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="glass-card space-y-4">
+                        <h3 class="text-2xl font-bold text-indigo-400">1. Manual Testing</h3>
+                        <p class="text-white/60">ใช้คนเทสทีละ Step เพื่อดูประสบการณ์ใช้งานจริง (UX) และหาบัคที่ไม่คาดคิด</p>
+                    </div>
+                    <div class="glass-card space-y-4">
+                        <h3 class="text-2xl font-bold text-emerald-400">2. Automation Testing</h3>
+                        <p class="text-white/60">ใช้เครื่องมือรันสคริปต์แทนคน เหมาะสำหรับงานที่ต้องทำซ้ำๆ และการทำ Regression</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <h3 class="text-2xl font-bold">Bug Lifecycle: วงจรชีวิตของบัค</h3>
+                    <div class="bug-path">
+                        <div class="bug-step font-bold text-red-400 border-red-400/20">พบ (Found)</div>
+                        <i class="fas fa-chevron-right text-indigo-500"></i>
+                        <div class="bug-step font-bold text-orange-400 border-orange-400/20">รายงาน (Report)</div>
+                        <i class="fas fa-chevron-right text-indigo-500"></i>
+                        <div class="bug-step font-bold text-blue-400 border-blue-400/20">Dev แก้ (Fixed)</div>
+                        <i class="fas fa-chevron-right text-indigo-500"></i>
+                        <div class="bug-step font-bold text-green-400 border-green-400/20">Re-test</div>
+                        <i class="fas fa-chevron-right text-indigo-500"></i>
+                        <div class="bug-step font-bold text-purple-400 border-purple-400/20">Regression</div>
+                    </div>
+                    <p class="text-sm text-white/40 italic">* การเทสซ้ำเป็นหัวใจสำคัญเพื่อให้มั่นใจว่า "แก้หนึ่งจุด ไม่ทำให้อีกจุดพัง"</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Pain Points -->
+        <section class="slide">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <h2 class="text-5xl font-bold">ปัญหาที่น่ารำคาญใจของ Tester</h2>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="glass-card hover:bg-white/10 transition-colors">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded bg-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+                                <i class="fas fa-table"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-white">การทำตารางใหม่ซ้ำซาก</h4>
+                                <p class="text-sm text-white/60 mt-1">ต้องสร้างตาราง Test Case ใหม่ทุกครั้งที่เริ่มโปรเจ็ค เสียเวลาเซ็ตอัพที่น่าเบื่อ</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card hover:bg-white/10 transition-colors">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded bg-orange-500/20 flex items-center justify-center text-orange-500 shrink-0">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-white">การเขียนเอกสารด้วยมือ</h4>
+                                <p class="text-sm text-white/60 mt-1">ใช้แรงและเวลามากในการบรรยายแต่ละ Step และคาดหวังผลลัพธ์</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card hover:bg-white/10 transition-colors">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded bg-yellow-500/20 flex items-center justify-center text-yellow-500 shrink-0">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-white">Regression ที่ใช้เวลานาน</h4>
+                                <p class="text-sm text-white/60 mt-1">ต้องกลับไปเทสฟังก์ชั่นเก่าซ้ำๆ เพื่อเช็คความปลอดภัย ทำให้งานล้าช้า</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card hover:bg-white/10 transition-colors">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded bg-blue-500/20 flex items-center justify-center text-blue-500 shrink-0">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-white">Automation ที่ต้องใช้โค้ด</h4>
+                                <p class="text-sm text-white/60 mt-1">ความยากในการเขียน Script ทำให้ Tester หลายคนเข้าไม่ถึงประสิทธิภาพของมัน</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-indigo-500/10 p-6 rounded-xl text-center border border-indigo-500/20">
+                    <p class="text-lg font-bold">"เราต้องการ <span class="text-indigo-400">เทมเพลตมาตรฐานเดียวกัน</span> เพื่อลดขั้นตอนที่ซ้ำซ้อน"</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Current Tools -->
+        <section class="slide bg-zinc-950">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <h2 class="text-5xl font-bold">เครื่องมือในปัจจุบัน</h2>
+                <div class="grid grid-cols-2 gap-12">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-6 p-6 bg-white/5 rounded-xl border border-white/10">
+                            <img src="https://img.icons8.com/color/48/google-sheets.png" alt="Sheets">
+                            <div>
+                                <h3 class="text-2xl font-bold">Google Sheets</h3>
+                                <p class="text-white/40">ใช้ทำเอกสาร Test Case</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6 p-6 bg-white/5 rounded-xl border border-white/10">
+                            <img src="https://www.vectorlogo.zone/logos/getpostman/getpostman-icon.svg" alt="Postman" class="w-12 h-12">
+                            <div>
+                                <h3 class="text-2xl font-bold">Postman</h3>
+                                <p class="text-white/40">ใช้เทส API หลังบ้าน</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col justify-center">
+                        <div class="bg-red-500/10 border border-red-500/20 p-8 rounded-2xl space-y-4">
+                            <h4 class="text-red-400 font-bold text-xl"><i class="fas fa-exclamation-triangle mr-2"></i> ข้อจำกัด:</h4>
+                            <ul class="space-y-3 text-white/70">
+                                <li>● แยกส่วนการทำงานชัดเจนเกินไป (Fragmented)</li>
+                                <li>● เชื่อมต่อข้อมูลกันได้ยาก</li>
+                                <li>● ไม่มีระบบ Automation ที่เชื่อมกับ Test Case โดยตรง</li>
+                                <li>● การสรุปผล (Report) ต้องทำเองแบบ Manual</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Project Showcase (Zentest UI) -->
+        <section class="slide">
+            <div class="max-w-6xl mx-auto space-y-8">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-5xl font-bold">Zentest Interface</h2>
+                    <span class="text-indigo-400 font-mono text-sm tracking-widest">MODERN & MINIMALIST DESIGN</span>
+                </div>
+                <div class="grid grid-cols-12 gap-6 h-[500px]">
+                    <div class="col-span-8 bg-zinc-900 rounded-xl border border-white/10 overflow-hidden shadow-2xl relative">
+                        <div class="h-8 bg-zinc-800 flex items-center px-4 gap-2 border-b border-white/5">
+                            <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                            <span class="text-[10px] text-white/20 ml-4 font-mono">zentest.app/workspace/dashboard</span>
+                        </div>
+                        <div class="p-6 grid grid-cols-2 gap-4">
+                            <div class="h-28 bg-white/5 rounded-lg border border-white/5 p-4 flex flex-col justify-between">
+                                <span class="text-[10px] text-white/40 font-bold uppercase tracking-widest">Pass Rate</span>
+                                <span class="text-4xl font-black text-emerald-500">98%</span>
+                            </div>
+                            <div class="h-28 bg-white/5 rounded-lg border border-white/5 p-4 flex flex-col justify-between">
+                                <span class="text-[10px] text-white/40 font-bold uppercase tracking-widest">Execution</span>
+                                <span class="text-4xl font-black text-indigo-500">1,240</span>
+                            </div>
+                            <div class="col-span-2 h-52 bg-white/5 rounded-lg border border-white/5 p-4 flex items-end gap-3">
+                                <div class="w-full bg-indigo-500/20 h-2/3 rounded-t-sm"></div>
+                                <div class="w-full bg-indigo-500/40 h-1/2 rounded-t-sm"></div>
+                                <div class="w-full bg-indigo-500/60 h-3/4 rounded-t-sm"></div>
+                                <div class="w-full bg-indigo-500/80 h-full rounded-t-sm"></div>
+                                <div class="w-full bg-indigo-500/40 h-1/3 rounded-t-sm"></div>
+                                <div class="w-full bg-indigo-500/60 h-2/3 rounded-t-sm"></div>
+                                <div class="w-full bg-indigo-500/30 h-1/2 rounded-t-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-span-4 space-y-4">
+                        <div class="glass-card">
+                            <h4 class="font-bold text-emerald-400 mb-3 text-sm uppercase tracking-wider">Smart Features</h4>
+                            <ul class="text-xs space-y-3 text-white/60">
+                                <li class="flex items-center gap-3"><i class="fas fa-bolt text-indigo-400"></i> One-click API Tester</li>
+                                <li class="flex items-center gap-3"><i class="fas fa-robot text-indigo-400"></i> No-code Automation</li>
+                                <li class="flex items-center gap-3"><i class="fas fa-users text-indigo-400"></i> Team Presence System</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card">
+                            <h4 class="font-bold text-indigo-400 mb-3 text-sm uppercase tracking-wider">How to use</h4>
+                            <p class="text-[10px] text-white/60 leading-relaxed space-y-1">
+                                1. สร้าง Project & Module<br>
+                                2. เพิ่ม Test Case หรือ API Endpoint<br>
+                                3. กดรัน Automation (ถ้ามี)<br>
+                                4. ดูรายงานสรุปผลทันที
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Objectives & Benefits -->
+        <section class="slide bg-zinc-950">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <h2 class="text-5xl font-bold text-center">ทำไมต้อง ZENTEST?</h2>
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="flex gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0"><i class="fas fa-clock"></i></div>
+                            <div>
+                                <h4 class="font-bold text-xl text-white">ลดเวลาการทำงานเบ็ดเตล็ด</h4>
+                                <p class="text-sm text-white/60">ไม่ต้องทำตารางใหม่ ไม่ต้องคิดคำอธิบายซ้ำซาก ระบบช่วยจัดการ priority และ severity ให้อัตโนมัติ</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0"><i class="fas fa-magic"></i></div>
+                            <div>
+                                <h4 class="font-bold text-xl text-white">No-Code Automation</h4>
+                                <p class="text-sm text-white/60">เปลี่ยน Test Case เป็น Automation ได้โดยไม่ต้องเขียนโค้ด ใครก็สามารถเป็น Automation Tester ได้</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="flex gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0"><i class="fas fa-chart-line"></i></div>
+                            <div>
+                                <h4 class="font-bold text-xl text-white">Execution Summary</h4>
+                                <p class="text-sm text-white/60">ประเมินภาพรวมความพร้อมของ Software ได้ในพริบตาผ่าน Dashboard ที่อ่านง่าย</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0"><i class="fas fa-comments"></i></div>
+                            <div>
+                                <h4 class="font-bold text-xl text-white">Team Collaboration</h4>
+                                <p class="text-sm text-white/60">มีระบบ Chat ในตัว และ Presence System เพื่อให้ทีมทำงานสอดประสานกันได้อย่างไร้รอยต่อ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 9: Results & Data -->
+        <section class="slide">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <div class="text-center space-y-4">
+                    <h2 class="text-5xl font-bold">ผลลัพธ์จากการใช้งานจริง</h2>
+                    <p class="text-xl text-white/40">เปรียบเทียบระยะเวลาก่อนและหลังการใช้ Zentest</p>
+                </div>
+                <div class="glass-card overflow-hidden !p-0 border border-white/10 shadow-2xl">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-white/5 border-b border-white/10 text-white/40 font-bold uppercase tracking-wider">
+                            <tr>
+                                <th class="p-5">กิจกรรม</th>
+                                <th class="p-5">ก่อนใช้ (เฉลี่ย)</th>
+                                <th class="p-5">หลังใช้ (เฉลี่ย)</th>
+                                <th class="p-5 text-emerald-400">ลดลง (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5 text-white/80">
+                            <tr>
+                                <td class="p-5 font-semibold">การสร้าง Test Case</td>
+                                <td class="p-5">47.5 นาที</td>
+                                <td class="p-5">29.5 นาที</td>
+                                <td class="p-5 text-emerald-400 font-black">38.0%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-5 font-semibold">การสร้าง Automation</td>
+                                <td class="p-5">22.5 นาที</td>
+                                <td class="p-5">5.5 นาที</td>
+                                <td class="p-5 text-emerald-400 font-black">75.5%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-5 font-semibold">การทดสอบ API</td>
+                                <td class="p-5">26.5 นาที</td>
+                                <td class="p-5">10.5 นาที</td>
+                                <td class="p-5 text-emerald-400 font-black">60.3%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-5 font-semibold">การสรุปรายงาน</td>
+                                <td class="p-5">62.5 นาที</td>
+                                <td class="p-5">40.0 นาที</td>
+                                <td class="p-5 text-emerald-400 font-black">36.0%</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-indigo-500/10 font-black text-lg">
+                            <tr>
+                                <td class="p-5 text-indigo-400">เฉลี่ยรวมทั้งระบบ</td>
+                                <td class="p-5">34.6 นาที</td>
+                                <td class="p-5">19.2 นาที</td>
+                                <td class="p-5 text-emerald-500">47.7%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <p class="text-center text-white/60">"ช่วยลดเวลาการทำงานลงได้เกือบ <span class="text-indigo-400 font-bold">ครึ่งหนึ่ง</span> จากขั้นตอนปกติ"</p>
+            </div>
+        </section>
+
+        <!-- Slide 10: Future Roadmap -->
+        <section class="slide bg-zinc-950">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <h2 class="text-5xl font-bold">อนาคตของ Zentest</h2>
+                <div class="grid grid-cols-2 gap-12 items-center">
+                    <div class="space-y-8">
+                        <div class="glass-card border-l-4 border-emerald-500 hover:translate-x-2 transition-transform">
+                            <h3 class="text-2xl font-bold mb-2">Integrated Bug Report System</h3>
+                            <p class="text-white/60 text-sm">ระบบแจ้งเตือนและส่งรายงานบัคไปยังทีม Developer โดยตรง พร้อมแนบหลักฐานจาก Automation ผลการรัน</p>
+                        </div>
+                        <div class="glass-card border-l-4 border-indigo-500 hover:translate-x-2 transition-transform">
+                            <h3 class="text-2xl font-bold mb-2">AI-Powered Test Generation</h3>
+                            <p class="text-white/60 text-sm">ใช้ AI ช่วยวิเคราะห์หน้าเว็บและเขียน Test Case ให้อัตโนมัติจากรูปภาพหรือ URL</p>
+                        </div>
+                    </div>
+                    <div class="text-center space-y-6">
+                        <i class="fas fa-rocket text-9xl text-indigo-500 animate-bounce"></i>
+                        <h4 class="text-4xl font-black">Scaling to the Moon</h4>
+                        <p class="text-white/40 italic">"ไม่ได้เป็นแค่เครื่องมือ แต่เป็น Ecosystem ของการเทส"</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 11: Final -->
+        <section class="slide">
+            <div class="max-w-4xl mx-auto text-center space-y-12">
+                <h2 class="text-8xl font-black gradient-text">ขอบคุณครับ</h2>
+                <p class="text-2xl text-white/40 uppercase tracking-[0.3em] font-light">Any Questions? / Q&A</p>
+                <!-- Contact links removed as requested -->
+            </div>
+        </section>
+
+    </div>
+
+    <div class="nav-dots" id="navDots"></div>
+
+    <div class="controls">
+        <button class="btn-nav" id="prevBtn" title="Previous Slide (Left Arrow)"><i class="fas fa-chevron-left"></i></button>
+        <button class="btn-nav" id="nextBtn" title="Next Slide (Right Arrow / Space)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <script>
+        const container = document.getElementById('slideContainer');
+        const slides = document.querySelectorAll('.slide');
+        const dotsContainer = document.getElementById('navDots');
+        const progressBar = document.getElementById('progressBar');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        // Create dots
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(i));
+            dotsContainer.appendChild(dot);
+        });
+
+        const dots = document.querySelectorAll('.dot');
+
+        function updateUI() {
+            container.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentSlide);
+            });
+
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            // Animation trigger for elements in slide
+            const activeSlide = slides[currentSlide];
+            activeSlide.querySelectorAll('.animate-in').forEach(el => {
+                el.style.animation = 'none';
+                el.offsetHeight; // trigger reflow
+                el.style.animation = null;
+            });
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= totalSlides) currentSlide = totalSlides - 1;
+            updateUI();
+        }
+
+        nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
+        prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+            if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+        });
+
+        // Initial UI update
+        updateUI();
+    </script>
+</body>
+</html>

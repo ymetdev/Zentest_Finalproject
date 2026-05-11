@@ -22,7 +22,6 @@ const DEFAULT_FORM: Partial<APITestCase> = {
     headers: [{ key: 'Content-Type', value: 'application/json' }],
     body: '',
     expectedStatus: 200,
-    expectedBody: '',
     round: 1
 };
 
@@ -339,7 +338,7 @@ const APIForm: React.FC<APIFormProps> = ({
                 </div>
 
                 {/* Body */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-1.5 flex flex-col h-40">
                         <label className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Request Body (JSON)</label>
                         <textarea
@@ -347,15 +346,6 @@ const APIForm: React.FC<APIFormProps> = ({
                             onChange={(e) => setForm({ ...form, body: e.target.value })}
                             className="flex-1 w-full bg-[#000000] border border-white/10 rounded-sm p-3 text-[10px] text-white/80 outline-none focus:border-white/20 custom-scrollbar resize-none"
                             placeholder="{}"
-                        />
-                    </div>
-                    <div className="space-y-1.5 flex flex-col h-40">
-                        <label className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Expected Response (JSON Pattern)</label>
-                        <textarea
-                            value={form.expectedBody}
-                            onChange={(e) => setForm({ ...form, expectedBody: e.target.value })}
-                            className="flex-1 w-full bg-[#000000] border border-white/10 rounded-sm p-3 text-[10px] text-emerald-400/80 outline-none focus:border-emerald-500/30 custom-scrollbar resize-none"
-                            placeholder="{ ... }"
                         />
                     </div>
                 </div>

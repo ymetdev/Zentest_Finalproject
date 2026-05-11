@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { TestCase, APITestCase } from '../types';
 
 export const useTestFilters = (
@@ -12,7 +12,7 @@ export const useTestFilters = (
     const [filterAutomation, setFilterAutomation] = useState<boolean>(false);
     const [filterUser, setFilterUser] = useState<string>('All');
 
-    const filterLogic = (c: TestCase | APITestCase) => {
+    const filterLogic = useCallback((c: TestCase | APITestCase) => {
         const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
             (c as any).url?.toLowerCase().includes(search.toLowerCase()) ||
             c.id.toLowerCase().includes(search.toLowerCase());
@@ -23,7 +23,7 @@ export const useTestFilters = (
         const matchesUser = filterUser === 'All' || c.lastUpdatedByName === filterUser;
 
         return matchesSearch && matchesStatus && matchesModule && matchesPriority && matchesAutomation && matchesUser;
-    };
+    }, [search, filterStatus, filterModule, filterPriority, filterAutomation, filterUser]);
 
     const filteredCases = useMemo(() => {
         return testCases.filter(filterLogic);
