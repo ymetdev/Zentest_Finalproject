@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Play, Search, LogIn, CheckSquare, Eye, EyeOff, AlertCircle, Download, Activity, Globe, Trash2, LayoutDashboard, ChevronRight, Lock
+  Play, Search, LogIn, CheckSquare, Eye, EyeOff, AlertCircle, Download, Activity, Globe, Trash2, LayoutDashboard, ChevronRight, Lock, HelpCircle, Chrome, X, ExternalLink
 } from 'lucide-react';
 import {
   onAuthStateChanged,
@@ -31,6 +31,8 @@ import TestCaseForm from './components/TestCaseForm';
 import APITable from './components/APITable';
 import APIForm from './components/APIForm';
 import Dashboard from './components/Dashboard';
+import SetupGuide from './components/SetupGuide';
+import { translations } from './translations';
 const LandingPage = React.lazy(() => import('./components/LandingPage'));
 import ConfirmModal from './components/ui/ConfirmModal';
 import CommentsDrawer from './components/CommentsDrawer';
@@ -91,7 +93,7 @@ export default function App() {
   const [isAdminDashboard, setIsAdminDashboard] = useState(false); // Admin Panel
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<'functional' | 'api' | 'dashboard'>('dashboard');
+  const [viewMode, setViewMode] = useState<'functional' | 'api' | 'dashboard' | 'setup'>('dashboard');
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
 
   const [isBooting, setIsBooting] = useState(false); // Transition state
@@ -104,6 +106,9 @@ export default function App() {
   const [editingCase, setEditingCase] = useState<TestCase | null>(null);
   const [editingAPICase, setEditingAPICase] = useState<APITestCase | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [showExtensionGuide, setShowExtensionGuide] = useState(false);
+  const [lang, setLang] = useState<'en' | 'th'>('th'); // Default to Thai
+  const t = translations[lang];
 
   // --- Real-time Listeners ---
   useEffect(() => {
@@ -630,26 +635,49 @@ export default function App() {
                 onClick={() => setViewMode('dashboard')}
                 className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all flex items-center gap-2 ${viewMode === 'dashboard' ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white'}`}
               >
-                <LayoutDashboard size={20} /> Enter Workspace
+                <LayoutDashboard size={20} /> {t.dashboard}
               </button>
               <div className="w-px h-3 bg-white/10 mx-1"></div>
               <button
                 onClick={() => setViewMode('functional')}
                 className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all flex items-center gap-2 ${viewMode === 'functional' ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white'}`}
               >
-                <CheckSquare size={12} /> Functional
+                <CheckSquare size={12} /> {t.functional}
               </button>
               <button
                 onClick={() => setViewMode('api')}
                 className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all flex items-center gap-2 ${viewMode === 'api' ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white'}`}
               >
-                <Globe size={12} /> API Tests
+                <Globe size={12} /> {t.apiTests}
+              </button>
+              <div className="w-px h-3 bg-white/10 mx-1"></div>
+              <button
+                onClick={() => setViewMode('setup')}
+                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all flex items-center gap-2 ${viewMode === 'setup' ? 'bg-indigo-500 text-white shadow-md' : 'text-white/40 hover:text-white'}`}
+              >
+                <HelpCircle size={12} /> {t.setupGuide}
               </button>
             </div>
           </div>
 
           {/* Right Side Actions & Presence */}
           <div className="flex items-center justify-between gap-3 pl-8">
+            {/* Language Toggle */}
+            <div className="flex bg-white/5 rounded-sm p-0.5 border border-white/10 mr-2">
+              <button
+                onClick={() => setLang('en')}
+                className={`px-2 py-0.5 text-[9px] font-bold rounded-sm transition-all ${lang === 'en' ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLang('th')}
+                className={`px-2 py-0.5 text-[9px] font-bold rounded-sm transition-all ${lang === 'th' ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}
+              >
+                TH
+              </button>
+            </div>
+
             {/* Notification Center */}
             {user && (
               <div className="mr-2">
@@ -736,7 +764,7 @@ export default function App() {
                 </button>
               )}
 
-              {viewMode !== 'dashboard' && activeProject?.role !== 'viewer' && (
+              {viewMode !== 'dashboard' && viewMode !== 'setup' && activeProject?.role !== 'viewer' && (
                 <button
                   disabled={!activeProjectId}
                   onClick={() => {
@@ -757,14 +785,14 @@ export default function App() {
                   }}
                   className="bg-white text-black px-4 py-2 rounded-sm text-xs font-bold hover:bg-white/90 transition-all active:scale-95 disabled:opacity-20 shadow-lg"
                 >
-                  + NEW {viewMode === 'functional' ? 'CASE' : 'API'}
+                  {viewMode === 'functional' ? t.newTestCase : t.newApi}
                 </button>
               )}
             </div>
           </div>
         </header>
 
-        {viewMode !== 'dashboard' && (
+        {(viewMode === 'functional' || viewMode === 'api') && (
           <div className="h-12 border-b border-white/10 flex items-center px-6 gap-4 bg-[#050505]">
             <div className="relative flex-1 max-w-md group">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-white/60 transition-colors" />
@@ -777,9 +805,7 @@ export default function App() {
               />
             </div>
             <div className="h-6 w-px bg-white/10 mx-2"></div>
-            {/* Advanced Filter Bar */}
             <div className="flex items-center gap-3">
-              {/* Module Filter */}
               <select
                 value={filterModule}
                 onChange={(e) => setFilterModule(e.target.value)}
@@ -789,7 +815,6 @@ export default function App() {
                 {allModules.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
               </select>
 
-              {/* Priority Filter */}
               <select
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
@@ -802,7 +827,6 @@ export default function App() {
                 <option value="Low">Low</option>
               </select>
 
-              {/* Status Filter */}
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -814,7 +838,6 @@ export default function App() {
                 <option value="Pending">Pending</option>
               </select>
 
-              {/* User Filter */}
               <select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
@@ -824,7 +847,6 @@ export default function App() {
                 {uniqueUsers.map(u => <option key={u} value={u as string}>{u}</option>)}
               </select>
 
-              {/* Automation Toggle */}
               <button
                 onClick={() => setFilterAutomation(!filterAutomation)}
                 className={`flex items-center gap-2 px-3 py-1 rounded border text-[10px] font-bold uppercase tracking-widest transition-all ${filterAutomation ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-transparent border-white/10 text-white/40 hover:text-white'}`}
@@ -837,16 +859,13 @@ export default function App() {
                 <button
                   onClick={clearFilters}
                   className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all ml-1"
-                  title="Clear Filters"
                 >
-                  <Search size={10} className="hidden" />
                   <span className="text-[10px]">&times;</span>
                 </button>
               )}
             </div>
           </div>
-        )
-        }
+        )}
 
         <div key={viewMode} className="flex-1 overflow-auto p-6 scroll-smooth custom-scrollbar animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both">
           {viewMode === 'dashboard' ? (
@@ -910,6 +929,11 @@ export default function App() {
                 setIsCaseModalOpen(true);
               }}
               readOnly={activeProject?.role === 'viewer'}
+            />
+          ) : viewMode === 'setup' ? (
+            <SetupGuide 
+              onShowGuide={() => setShowExtensionGuide(true)} 
+              t={t} 
             />
           ) : (
             <APITable
@@ -1069,6 +1093,66 @@ export default function App() {
         message={quotaMessage || ''}
         onUpgrade={() => setIsLicenseModalOpen(true)}
       />
+
+      {/* Extension Install Modal */}
+      {showExtensionGuide && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="bg-[#0A0A0A] border border-white/10 rounded-xl w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center p-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <Chrome className="text-indigo-400" size={20} />
+                <h3 className="font-bold uppercase tracking-widest text-sm text-white">{t.extInstallTitle}</h3>
+              </div>
+              <button 
+                onClick={() => setShowExtensionGuide(false)}
+                className="text-white/40 hover:text-white transition-colors p-1 hover:bg-white/5 rounded"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-6 text-sm">
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">1</div>
+                  <p className="text-white/70">{t.extStep1}</p>
+                </div>
+                
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">2</div>
+                  <p className="text-white/70">{t.extStep2}</p>
+                </div>
+                
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">3</div>
+                  <p className="text-white/70">{t.extStep3}</p>
+                </div>
+                
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">4</div>
+                  <p className="text-white/70">{t.extStep4}</p>
+                </div>
+              </div>
+
+              <div className="bg-indigo-500/5 border border-indigo-500/20 rounded p-4 flex items-start gap-3">
+                <ExternalLink size={16} className="text-indigo-400 mt-0.5" />
+                <p className="text-white/50 text-xs italic">
+                  {t.extNote}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 bg-white/[0.02] flex justify-end">
+              <button 
+                onClick={() => setShowExtensionGuide(false)}
+                className="bg-indigo-600 text-white px-6 py-2 rounded font-bold text-xs uppercase tracking-widest hover:bg-indigo-500 transition-colors"
+              >
+                {t.gotIt}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div >
   );
